@@ -65,15 +65,9 @@
           <div class="screen-pad" id="pot"></div>
         </section>
 
-        <!-- CHALLENGES (Phase 3) -->
-        <section class="screen" id="screen-challenges" data-screen="challenges">
-          <div class="screen-pad">
-            <div class="placeholder">
-              <div class="placeholder-emoji">👟</div>
-              <h2>Challenges</h2>
-              <p>Step Challenge lands here in Phase 3.</p>
-            </div>
-          </div>
+        <!-- MISSIONS: Me vs Me (Phase 4, drawn by missions.js) -->
+        <section class="screen" id="screen-missions" data-screen="missions">
+          <div class="screen-pad" id="missions-view"></div>
         </section>
       </main>
 
@@ -81,7 +75,7 @@
         <button type="button" class="tab is-active" data-tab="map"><span>🗺️</span>Map</button>
         <button type="button" class="tab" data-tab="discover"><span>🧭</span>Discover</button>
         <button type="button" class="tab" data-tab="pot"><span>🫙</span>Pot<i class="tab-dot" id="pot-dot"></i></button>
-        <button type="button" class="tab" data-tab="challenges"><span>🏆</span>Challenges</button>
+        <button type="button" class="tab" data-tab="missions"><span>🎯</span>Missions</button>
       </nav>
 
       <div class="sheet-backdrop" id="sheet-backdrop"></div>
@@ -102,5 +96,6 @@
   <script src="data.js"></script>
   <script src="engine.js"></script>
   <script src="app.js"></script>
+  <script src="missions.js"></script>
 </body>
 </html>

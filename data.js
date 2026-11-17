@@ -10,15 +10,19 @@
  *
  * Quick API
  *   TM.getState()                -> everything the UI needs for the current scenario
- *   TM.setScenario('normal' | 'skippedCoffee' | 'rentDueTomorrow')
+ *   TM.setScenario('normal' | 'skippedCoffee' | 'rentDueTomorrow' | 'veryTight')
  *   TM.onChange(fn)              -> fn(state) runs on every scenario change
- *   TM.mountScenarioSwitcher(el) -> drops 3 pill buttons into el
+ *   TM.mountScenarioSwitcher(el) -> drops the scenario buttons into el
  *   TM.visibleShops(tierId)      -> shops this card can see on the map
  *   TM.coinsFor(shop, tierId)    -> coin value of a shop for this card
  *   TM.spendByCategory(days)     -> { coffee: 81.2, delivery: 140, ... }
  *   TM.weeklyAverage(category)   -> average $ per week (last 28 days)
  *   TM.distanceKm(a, b)          -> haversine distance between {lat,lng}
  *   You can also open the page with ?scenario=rentDueTomorrow (handy for recording)
+ *
+ *   Scenarios: normal | skippedCoffee | rentDueTomorrow | veryTight
+ *   DATA (bottom of file) = the same numbers in the shape Phase 3 code reads:
+ *   DATA.transactions, DATA.scenarioFor('normal'|'skipped'|'rent'|'broke'), ...
  * ===================================================================== */
 (function (root) {
   'use strict';
@@ -474,6 +478,90 @@
     util: { addDays, daysBetween, dayOfWeek, round2 },
   };
 
+  // Build any scenario's state without switching the app to it
+  TM.peekState = function (id) {
+    const keep = txSeq;
+    txSeq = HISTORY.length;
+    const s = buildState(id);
+    s.user.cardTier = current.user.cardTier;
+    s.card = CARD_TIERS[s.user.cardTier];
+    txSeq = keep;
+    return s;
+  };
+
+  /* =====================================================================
+   * 11. DATA ADAPTER (same numbers as TM, in the shape Phase 3 code uses)
+   *   DATA.transactions  -> spending only, amounts POSITIVE, date = Date object
+   *   DATA.scenarios     -> normal | skipped | rent | broke
+   *   DATA.scenarioFor(key) -> { label, balance, rentInDays, skipSecondCoffee, todayTxns, bills }
+   * =================================================================== */
+  const SCENARIO_KEYS = { normal: 'normal', skipped: 'skippedCoffee', rent: 'rentDueTomorrow', broke: 'veryTight' };
+  const CAT_MAP = { meals: 'lunch', rideshare: 'uber' }; // TM category -> DATA category
+  const toDate = (t) => {
+    const [h, m] = (t.time || '00:00').split(':').map(Number);
+    return new Date(+t.date.slice(0, 4), +t.date.slice(5, 7) - 1, +t.date.slice(8, 10), h, m);
+  };
+  const toDataTx = (t) => ({
+    date: toDate(t),
+    category: CAT_MAP[t.category] || t.category,
+    merchant: t.merchant,
+    amount: Math.abs(t.amount),
+  });
+  const isSpend = (t) => t.amount < 0 && t.category !== 'savings';
+
+  function dataScenario(key) {
+    const s = TM.peekState(SCENARIO_KEYS[key]);
+    const rent = s.upcoming.find((b) => b.recurringId === 'rent');
+    return {
+      key,
+      id: s.scenario.id,
+      label: s.scenario.label,
+      balance: s.accounts.everyday.balance,
+      rentInDays: daysBetween(TODAY, rent.date),
+      skipSecondCoffee: SCENARIOS[s.scenario.id].skipSecondCoffee,
+      aiHint: s.scenario.aiHint,
+      cashflow: s.cashflow,
+    };
+  }
+
+  const DATA = {
+    demoToday: new Date(+TODAY.slice(0, 4), +TODAY.slice(5, 7) - 1, +TODAY.slice(8, 10)),
+    get persona() { return { name: USER.name, card: current.user.cardTier }; },
+    cardTiers: Object.fromEntries(Object.values(CARD_TIERS).map((t) => [t.id, {
+      label: t.label, multiplier: t.multiplier, sources: t.sources.map((x) => x.toLowerCase()),
+    }])),
+    get goal() { return { name: GOAL.name, target: GOAL.target, saved: current.goal.saved }; },
+    // Reads the live Pot from engine.js when it is loaded
+    get potHistory() {
+      const E = root.Engine;
+      if (!E) return [];
+      return E.potHistory().map((h) => ({
+        source: h.type, label: h.label, amount: h.amount,
+        when: daysBetween(h.date, TODAY) === 0 ? 'Today' : daysBetween(h.date, TODAY) === 1 ? 'Yesterday' : h.date,
+        date: h.date,
+      }));
+    },
+    shops: SHOPS,
+    transactions: HISTORY.filter(isSpend).map(toDataTx).sort((a, b) => a.date - b.date),
+    get scenarios() {
+      return Object.fromEntries(Object.keys(SCENARIO_KEYS).map((k) => [k, dataScenario(k)]));
+    },
+    scenarioFor(key) {
+      const k = SCENARIO_KEYS[key] ? key : 'normal';
+      const s = TM.peekState(SCENARIO_KEYS[k]);
+      return Object.assign(dataScenario(k), {
+        todayTxns: s.todayTransactions.filter(isSpend).map(toDataTx),
+        bills: s.upcoming
+          .filter((b) => b.amount < 0 && b.category !== 'savings')
+          .map((b) => ({ name: b.name.split(':')[0], amount: Math.abs(b.amount), due: toDate({ date: b.date }) })),
+      });
+    },
+    // Switch the whole app (map, Pot, switcher) using a DATA key
+    setScenario(key) { return TM.setScenario(SCENARIO_KEYS[key] || key); },
+  };
+  TM.DATA = DATA;
+
   if (typeof module !== 'undefined' && module.exports) module.exports = TM;
   root.TM = TM;
+  root.DATA = DATA;
 })(typeof window !== 'undefined' ? window : globalThis);

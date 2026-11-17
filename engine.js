@@ -9,7 +9,9 @@
  *   Engine.nearYou(cat) / topHeroes(cat) / newHeroes(cat) / categories()
  *   Engine.reasonFor(shop)   -> short "why this?" line (rule-based for now)
  *   Engine.potBalance() / potHistory() / potBreakdown() / goalStats()
- *   Engine.onChange(fn)      -> fn({ type }) after useOffer / reset
+ *   Engine.cashFlowCheck(amount) -> { mode: full|reduced|none, amount }  (shared with Skip & Save)
+ *   Engine.mission() / simulateWeek(kind) / acceptReward() / setAutoSend(on)   (Me vs Me)
+ *   Engine.onChange(fn)      -> fn({ type }) after useOffer / mission events / reset
  *   Engine.reset()
  * ===================================================================== */
 (function (root) {
@@ -161,11 +163,214 @@
     };
   }
 
+  /* =====================================================================
+   * CASH-FLOW CHECK (shared by Skip & Save and Me vs Me)
+   *   buffer = everyday balance minus bills due before next payday
+   *   full    -> buffer >= $300   (move the whole amount)
+   *   reduced -> buffer >= $50    (move half)
+   *   none    -> below $50        (move nothing, stay quiet)
+   * =================================================================== */
+  const CASH = { full: 300, min: 50, reducedShare: 0.5 };
+  const cashBuffer = () => state().cashflow.safeToSpend;
+  function cashFlowCheck(amount, buffer) {
+    const b = buffer === undefined ? cashBuffer() : buffer;
+    const mode = b >= CASH.full ? 'full' : b >= CASH.min ? 'reduced' : 'none';
+    const out = mode === 'full' ? amount : mode === 'reduced' ? r2(amount * CASH.reducedShare) : 0;
+    return { mode, buffer: r2(b), amount: out };
+  }
+
+  /* =====================================================================
+   * ME VS ME (Phase 4): weekly missions against your own baseline
+   * =================================================================== */
+  const MISSION = {
+    categories: ['delivery', 'coffee', 'rideshare', 'meals'], // discretionary only
+    startFactor: 0.9,   // first target = baseline x 0.9
+    levelUpBeat: 0.2,   // beat the target by more than 20% -> level up
+    levelUpFactor: 0.9, // each level up makes the target 10% harder
+    easeFactor: 1.1,    // two misses in a row -> target eases ~10%
+    floorShare: 0.6,    // healthy floor: never below 60% of the baseline
+    maxLevel: 5,
+    tiers: [0, 3, 5, 8, 12, 15], // reward cap per level ($)
+    bufferShare: 0.03,  // and never more than 3% of the cash-flow buffer
+    shiftShare: 0.7,    // if 70%+ of the saving reappears elsewhere -> "shifted"
+    tinyAmount: 3, tinyCount: 4, // 4+ purchases under $3 at one merchant in a day -> flagged
+  };
+  const WEEK_START = TM.util.addDays(TM.TODAY, -((TM.util.dayOfWeek(TM.TODAY) + 6) % 7)); // this Monday
+
+  function weeklySpend(category, weekStartISO, txs) {
+    const end = TM.util.addDays(weekStartISO, 7);
+    return r2((txs || state().transactions)
+      .filter((t) => t.category === category && t.amount < 0 && t.date >= weekStartISO && t.date < end)
+      .reduce((s, t) => s - t.amount, 0));
+  }
+  // Median of the last 4 full weeks (median, so one big week does not skew it)
+  function baseline(category) {
+    const weeks = [4, 3, 2, 1].map((k) => weeklySpend(category, TM.util.addDays(WEEK_START, -7 * k)));
+    const s = weeks.slice().sort((a, b) => a - b);
+    return { median: r2((s[1] + s[2]) / 2), weeks };
+  }
+  function topDiscretionary() {
+    return MISSION.categories
+      .map((c) => ({ category: c, baseline: baseline(c).median }))
+      .sort((a, b) => b.baseline - a.baseline)[0];
+  }
+  const floorFor = (anchor) => Math.round(anchor * MISSION.floorShare);
+
+  function newMission() {
+    const top = topDiscretionary();
+    return {
+      category: top.category,
+      anchor: top.baseline,
+      target: Math.round(top.baseline * MISSION.startFactor),
+      level: 1,
+      fails: 0,
+      week: 0,
+      history: [],
+      autoSend: false,
+      pending: null,
+      last: null,
+    };
+  }
+
+  function missionReward(level, buffer) {
+    const b = buffer === undefined ? cashBuffer() : buffer;
+    const tier = MISSION.tiers[level];
+    const cap = r2(Math.max(0, b) * MISSION.bufferShare);
+    const base = r2(Math.min(tier, cap));
+    const check = cashFlowCheck(base, b);
+    return { tier, cap, base, amount: check.amount, mode: check.mode, buffer: check.buffer };
+  }
+
+  // Anti-gaming 1: did the saving just move to another category?
+  function isShifted(category, baselines, actuals) {
+    const drop = baselines[category] - actuals[category];
+    if (drop <= 0) return false;
+    const rise = MISSION.categories
+      .filter((c) => c !== category)
+      .reduce((s, c) => s + Math.max(0, actuals[c] - baselines[c]), 0);
+    return rise >= drop * MISSION.shiftShare;
+  }
+  // Anti-gaming 2: lots of tiny purchases at one merchant in one day
+  function tinyPurchaseFlag(txs) {
+    const groups = {};
+    txs.filter((t) => Math.abs(t.amount) < MISSION.tinyAmount).forEach((t) => {
+      const k = t.merchant + '|' + t.date;
+      groups[k] = (groups[k] || 0) + 1;
+    });
+    const hit = Object.entries(groups).find(([, n]) => n >= MISSION.tinyCount);
+    return hit ? { flagged: true, merchant: hit[0].split('|')[0], count: hit[1] } : { flagged: false };
+  }
+
+  // Fake a week for the demo: strong | ok | fail | shifted | cheat
+  function simulateWeek(kind) {
+    const m = store.mission;
+    const cat = m.category;
+    const baselines = Object.fromEntries(MISSION.categories.map((c) => [c, baseline(c).median]));
+    const actuals = Object.assign({}, baselines);
+    actuals[cat] = r2(m.target * { strong: 0.7, ok: 0.95, fail: 1.2, shifted: 0.5, cheat: 0.9 }[kind]);
+    if (kind === 'shifted') {
+      const other = cat === 'meals' ? 'delivery' : 'meals';
+      actuals[other] = r2(baselines[other] + (baselines[cat] - actuals[cat]) * 0.8);
+    }
+    const weekDay = TM.util.addDays(TM.TODAY, 7 * m.week);
+    const tiny = kind === 'cheat'
+      ? Array.from({ length: 6 }, () => ({ merchant: 'Daily Grind Cavill Ave', date: weekDay, amount: -1.5 }))
+      : [];
+    return settleWeek({ actual: actuals[cat], shifted: isShifted(cat, baselines, actuals), flag: tinyPurchaseFlag(tiny) });
+  }
+
+  function settleWeek({ actual, shifted, flag }) {
+    const m = store.mission;
+    const label = TM.CATEGORIES[m.category].label.toLowerCase();
+    const before = { target: m.target, level: m.level };
+    const floor = floorFor(m.anchor);
+    let result, note, rewardLevel = null;
+
+    if (flag.flagged) {
+      result = 'flagged';
+      note = `${flag.count} tiny purchases at ${flag.merchant} in one day. This week does not count.`;
+    } else if (shifted) {
+      result = 'shifted';
+      note = `Spending on ${label} dropped, but almost the same amount moved to another category. No reward, no penalty.`;
+    } else if (actual > m.target) {
+      m.fails += 1;
+      if (m.fails >= 2) {
+        m.target = Math.min(Math.round(m.anchor), Math.round(m.target * MISSION.easeFactor));
+        m.fails = 0;
+        result = 'eased';
+        note = `Two misses in a row, so the AI eases your target to $${m.target}.`;
+      } else {
+        result = 'fail';
+        note = `$${actual.toFixed(2)} spent, over your $${m.target} target. One more miss and the target gets easier.`;
+      }
+    } else {
+      m.fails = 0;
+      const beat = (m.target - actual) / m.target;
+      if (beat > MISSION.levelUpBeat && m.level < MISSION.maxLevel && m.target > floor) {
+        m.level += 1;
+        m.target = Math.max(floor, Math.round(m.target * MISSION.levelUpFactor));
+        result = 'levelup';
+        note = `You beat the target by ${Math.round(beat * 100)}%. Level ${m.level}! New target: $${m.target}.`;
+      } else {
+        result = 'win';
+        note = `Target hit: $${actual.toFixed(2)} of $${before.target}.`;
+      }
+      rewardLevel = m.level;
+    }
+
+    m.history.push({ week: m.week + 1, result, actual, target: before.target, level: before.level });
+    m.week += 1;
+    m.last = { result, note, before, after: { target: m.target, level: m.level } };
+    m.pending = null;
+
+    let reward = null;
+    if (rewardLevel !== null) {
+      reward = missionReward(rewardLevel);
+      reward.label = `Mission: ${TM.CATEGORIES[m.category].label} under $${before.target}`;
+      reward.actual = actual;
+      reward.target = before.target;
+      if (reward.amount <= 0) m.last.extra = 'Cash flow is very tight, so no money moves this week.';
+      else if (m.autoSend) { creditMission(reward.amount, reward.label); m.last.extra = `$${reward.amount.toFixed(2)} sent to your Japan Pot.`; }
+      else m.pending = reward;
+    }
+    emit({ type: 'mission-week', mission: m, reward });
+    return { result, reward, mission: m };
+  }
+
+  function creditMission(amount, label) {
+    const entry = { date: TM.TODAY, time: nowTime(), type: 'mission', label, amount: r2(amount), fresh: true };
+    store.session.push(entry);
+    emit({ type: 'mission-credit', entry });
+    return entry;
+  }
+  function acceptReward() {
+    const m = store.mission;
+    if (!m.pending) return null;
+    const entry = creditMission(m.pending.amount, m.pending.label);
+    m.last.extra = `$${entry.amount.toFixed(2)} sent to your Japan Pot.`;
+    m.pending = null;
+    return entry;
+  }
+  function declineReward() {
+    const m = store.mission;
+    if (!m.pending) return;
+    m.last.extra = 'No problem. Nothing moved.';
+    m.pending = null;
+    emit({ type: 'mission-declined' });
+  }
+  function setAutoSend(on) { store.mission.autoSend = !!on; emit({ type: 'mission-auto' }); }
+
+  // Spend so far in the current mission week (real data for this week, then fresh weeks start at $0)
+  const spentThisWeek = () => (store.mission.week === 0 ? weeklySpend(store.mission.category, WEEK_START) : 0);
+
+  store.mission = newMission();
+
   /* ---------- misc ---------- */
   function reset() {
     store.used = {};
     store.session = [];
     store.coins = START_COINS;
+    store.mission = newMission();
     emit({ type: 'reset' });
   }
   function onChange(fn) { listeners.push(fn); return () => listeners.splice(listeners.indexOf(fn), 1); }
@@ -176,6 +381,11 @@
     distanceFromUser, formatDistance,
     nearYou, topHeroes, newHeroes, categories, reasonFor,
     potBalance, potHistory, potBreakdown, goalStats,
+    // cash-flow check (Skip & Save should call this too)
+    CASH, cashBuffer, cashFlowCheck,
+    // Me vs Me
+    MISSION, mission: () => store.mission, baseline, topDiscretionary, floorFor, missionReward,
+    isShifted, tinyPurchaseFlag, simulateWeek, settleWeek, acceptReward, declineReward, setAutoSend, spentThisWeek,
     onChange, reset,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

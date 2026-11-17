@@ -611,7 +611,17 @@
   }
 
   // Hooks for Phase 3 (goal search, AI picks, challenges)
-  window.App = { openOffer, closeSheet, flyTo, goArea, highlightShops, showTab, toast, renderAll };
+  // Coins fly from an element to the Pot tab, then the Pot refreshes (used by Me vs Me)
+  function sendToPot(fromEl) {
+    coinBurst(fromEl, $('[data-tab="pot"]'), () => {
+      const tab = $('[data-tab="pot"]');
+      tab.classList.remove('bump'); void tab.offsetWidth; tab.classList.add('bump');
+    });
+    $('#pot-dot').classList.add('is-on');
+    renderPot();
+  }
+
+  window.App = { openOffer, closeSheet, flyTo, goArea, highlightShops, showTab, toast, renderAll, sendToPot, fmt };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
