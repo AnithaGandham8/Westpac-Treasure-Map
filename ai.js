@@ -15,13 +15,16 @@
   const TM = root.TM, E = root.Engine;
   const OFF = /[?&]ai=off\b/.test(root.location ? root.location.search : '');
   const TIMEOUT_MS = 6000;
+  // On Cloudflare the functions share the site's origin. On GitHub Pages (static) they live on the Cloudflare copy.
+  const CLOUDFLARE_URL = 'https://westpac-treasure-map.pages.dev';
+  const API_BASE = root.location && /\.github\.io$/.test(root.location.hostname) ? CLOUDFLARE_URL : '';
 
   async function post(path, body) {
     if (OFF) throw new Error('ai off');
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
     try {
-      const res = await fetch('/api/' + path, {
+      const res = await fetch(API_BASE + '/api/' + path, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal,
       });
       const data = await res.json();
