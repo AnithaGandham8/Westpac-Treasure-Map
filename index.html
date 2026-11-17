@@ -1,60 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Westpac Treasure Map</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Treasure Map</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="stage">
-    <div class="mobile-frame" id="app">
-      <div class="phone-top-bar">
-        <span>9:41</span>
-        <div class="dynamic-island"></div>
-        <span class="status-right">5G</span>
-      </div>
-
-      <!-- Tab panels: each phase fills one of these -->
-      <section class="screen-content tab-panel active" id="tab-map" aria-label="Map">
-        <h1 class="h2-text">Treasure Map</h1>
-        <p class="caption-reg">Rewards Westpac already pays for, finally in sight.</p>
-        <div class="card">
-          <div class="ai-tag">AI · scaffold check</div>
-          <p class="body-reg" id="scaffold-status">Loading…</p>
+  <div class="stage">
+    <!-- ================= PHONE ================= -->
+    <div class="phone" id="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">🗺️</span>
+          <div>
+            <div class="brand-title">Treasure Map</div>
+            <div class="brand-sub" id="hello">Hi Ana 👋</div>
+          </div>
         </div>
-        <!-- Phase 2: SVG map, chests, power-up switcher, feed -->
-      </section>
+        <button class="coin-counter" id="coin-counter" type="button" aria-label="Your coins">
+          <span class="coin-ico" data-icon="coin"></span>
+          <span id="coin-count">0</span>
+        </button>
+      </header>
 
-      <section class="screen-content tab-panel" id="tab-pot" aria-label="Pot">
-        <h1 class="h2-text">Japan pot</h1>
-        <p class="caption-reg">Phase 2: balance, progress ring, where each dollar came from.</p>
-      </section>
+      <!-- Card power-up switcher -->
+      <div class="powerup" id="powerup" role="radiogroup" aria-label="Your card power-up"></div>
 
-      <section class="screen-content tab-panel" id="tab-missions" aria-label="Missions">
-        <h1 class="h2-text">Me vs Me</h1>
-        <p class="caption-reg">Phase 4: weekly targets and levels.</p>
-      </section>
+      <main class="screens">
+        <!-- MAP -->
+        <section class="screen is-active" id="screen-map" data-screen="map">
+          <div class="map" id="map">
+            <svg id="map-svg" preserveAspectRatio="none" aria-label="Map of the Gold Coast"></svg>
+            <div class="map-labels" id="map-labels"></div>
+            <div class="map-markers" id="map-markers"></div>
+            <div class="map-chips" id="map-chips"></div>
+            <div class="map-zoom">
+              <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+              <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+            </div>
+            <div class="map-legend">
+              <span><i data-icon="chest"></i>Extras</span>
+              <span><i data-icon="bag"></i>ShopBack</span>
+              <span><i data-icon="gem"></i>Altitude</span>
+            </div>
+          </div>
+        </section>
 
-      <!-- Phase 3: Skip & Save prompt slides in here -->
-      <div id="prompt-layer"></div>
+        <!-- DISCOVER (feed) -->
+        <section class="screen" id="screen-discover" data-screen="discover">
+          <div class="screen-pad">
+            <!-- Phase 3 hooks the goal search into this input -->
+            <label class="goal-search">
+              <span aria-hidden="true">✨</span>
+              <input id="goal-search" type="search" placeholder="Type your goal… e.g. Japan trip in June" autocomplete="off">
+            </label>
+            <div class="chips" id="category-chips"></div>
+            <div id="feed"></div>
+          </div>
+        </section>
 
-      <nav class="bottom-nav">
-        <button class="nav-item active" data-tab="map">Map</button>
-        <button class="nav-item" data-tab="pot">Pot</button>
-        <button class="nav-item" data-tab="missions">Missions</button>
+        <!-- POT -->
+        <section class="screen" id="screen-pot" data-screen="pot">
+          <div class="screen-pad" id="pot"></div>
+        </section>
+
+        <!-- CHALLENGES (Phase 3) -->
+        <section class="screen" id="screen-challenges" data-screen="challenges">
+          <div class="screen-pad">
+            <div class="placeholder">
+              <div class="placeholder-emoji">👟</div>
+              <h2>Challenges</h2>
+              <p>Step Challenge lands here in Phase 3.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <nav class="tabbar" aria-label="Main">
+        <button type="button" class="tab is-active" data-tab="map"><span>🗺️</span>Map</button>
+        <button type="button" class="tab" data-tab="discover"><span>🧭</span>Discover</button>
+        <button type="button" class="tab" data-tab="pot"><span>🫙</span>Pot<i class="tab-dot" id="pot-dot"></i></button>
+        <button type="button" class="tab" data-tab="challenges"><span>🏆</span>Challenges</button>
       </nav>
+
+      <div class="sheet-backdrop" id="sheet-backdrop"></div>
+      <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="fx-layer" id="fx" aria-hidden="true"></div>
     </div>
 
-    <!-- Hidden demo panel (open with the D key) -->
-    <aside class="demo-panel" id="demo-panel" hidden>
-      <strong>Demo controls</strong>
-      <label><input type="radio" name="scenario" value="normal" checked> Normal day</label>
-      <label><input type="radio" name="scenario" value="skipped"> Skipped coffee</label>
-      <label><input type="radio" name="scenario" value="rent"> Rent due tomorrow</label>
-      <button class="btn-secondary" id="btn-reset">Reset demo</button>
+    <!-- ================= DEMO CONTROLS (outside the phone) ================= -->
+    <aside class="demo">
+      <div class="demo-title">Demo controls</div>
+      <div id="scenario-switcher"></div>
+      <p class="demo-note" id="scenario-note"></p>
+      <button type="button" class="demo-reset" id="reset-demo">↺ Reset demo</button>
     </aside>
-  </main>
+  </div>
 
   <script src="data.js"></script>
   <script src="engine.js"></script>
