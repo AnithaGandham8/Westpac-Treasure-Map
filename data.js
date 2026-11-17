@@ -131,11 +131,11 @@
     shop('s10', 'Burleigh Taco Shack',    'meals',       'Burleigh Heads',   -28.0870, 153.4505, 'ShopBack', 'cashback', 7,  false, true,  ['mexican', 'tacos', 'beach', 'dinner']),
     shop('s11', 'Lunch Box Kitchen',      'meals',       'Surfers Paradise', -28.0035, 153.4300, 'Extras',   'cashback', 10, false, false, ['lunch', 'healthy', 'salad', 'work']),
     shop('s12', 'Coastline Fuel',         'fuel',        'Southport',        -27.9720, 153.4080, 'Extras',   'cashback', 3,  false, false, ['fuel', 'petrol', 'car', 'road trip']),
-    shop('s13', 'Horizon Travel Centre',  'travel',      'Surfers Paradise', -28.0010, 153.4285, 'Altitude', 'points',   6,  true,  false, ['travel', 'holiday', 'flights', 'japan', 'tours', 'trip']),
+    shop('s13', 'Horizon Travel Centre',  'travel',      'Surfers Paradise', -28.0010, 153.4285, 'Altitude', 'points',   6,  true,  false, ['travel', 'holiday', 'flights', 'tours', 'trip', 'overseas']),
     shop('s14', 'Packed Luggage Co',      'travel',      'Robina',           -28.0790, 153.3860, 'ShopBack', 'cashback', 9,  false, false, ['luggage', 'suitcase', 'travel', 'backpack']),
-    shop('s15', 'SkyGate Flights',        'travel',      'Coolangatta',      -28.1660, 153.5070, 'Altitude', 'points',   5,  true,  false, ['flights', 'airline', 'airport', 'japan', 'tokyo', 'overseas']),
-    shop('s16', 'Yen & Euro Exchange',    'travel',      'Surfers Paradise', -28.0025, 153.4315, 'Altitude', 'points',   4,  false, true,  ['currency', 'yen', 'japan', 'money exchange', 'overseas']),
-    shop('s17', 'Bento House',            'meals',       'Southport',        -27.9660, 153.4020, 'Extras',   'cashback', 10, false, true,  ['japanese', 'ramen', 'bento', 'lunch', 'japan']),
+    shop('s15', 'SkyGate Flights',        'travel',      'Coolangatta',      -28.1660, 153.5070, 'Altitude', 'points',   5,  true,  false, ['flights', 'airline', 'airport', 'overseas', 'holiday', 'trip']),
+    shop('s16', 'Coastal Currency Exchange','travel',      'Surfers Paradise', -28.0025, 153.4315, 'Altitude', 'points',   4,  false, true,  ['currency', 'money exchange', 'overseas', 'travel']),
+    shop('s17', 'Bento House',            'meals',       'Southport',        -27.9660, 153.4020, 'Extras',   'cashback', 10, false, true,  ['japanese', 'ramen', 'bento', 'lunch']),
     shop('s18', 'Surf & Sole',            'fashion',     'Broadbeach',       -28.0275, 153.4290, 'ShopBack', 'cashback', 12, false, false, ['clothes', 'shoes', 'surfwear']),
     shop('s19', 'Pacific Department Store','department', 'Robina',           -28.0770, 153.3870, 'Extras',   'cashback', 6,  true,  false, ['department store', 'clothes', 'home', 'electronics', 'gifts']),
     shop('s20', 'Peak Fitness',           'fitness',     'Southport',        -27.9640, 153.3980, 'ShopBack', 'cashback', 15, false, false, ['gym', 'fitness', 'health', 'workout']),
@@ -157,16 +157,25 @@
     work: { suburb: 'Surfers Paradise', lat: -28.0015, lng: 153.4300 },
   };
 
+  // Ana's main savings goal. More goals can be added in the Pot tab (engine.js keeps them).
   const GOAL = {
-    id: 'japan',
-    name: 'Japan trip',
-    emoji: '🗾',
-    query: 'I want to go to Japan in June', // example text for the goal search demo
+    id: 'trip',
+    name: 'Holiday trip',
+    emoji: '✈️',
+    query: 'I want to go on a beach holiday in June', // example text for the goal search demo
     target: 4500,
     saved: 1240,
     deadline: '2027-06-01',
-    tags: ['travel', 'japan', 'flights', 'yen', 'luggage', 'holiday', 'tokyo'],
+    tags: ['travel', 'holiday', 'flights', 'luggage', 'currency', 'overseas', 'trip', 'tours'],
   };
+
+  // Example goals shown under the goal search (tap one to run it)
+  const GOAL_IDEAS = [
+    { title: '✈️ Travel', ideas: ['I want to go to Japan in June', 'Save for a holiday overseas', 'Book cheap flights to Tokyo', 'I need a suitcase for my trip', 'Exchange yen before my trip', 'Road trip up the coast'] },
+    { title: '☕ Food & coffee', ideas: ['I want better coffee near work', 'Weekend brunch with fresh pastries', 'Cheap healthy lunch at work', 'Try Japanese food and ramen', 'Street food and night markets', 'Treat myself to gelato at the beach'] },
+    { title: '🛒 Everyday shopping', ideas: ['Weekly grocery shop for less', 'Buy fresh fruit and vegetables', 'New running shoes', 'Update my wardrobe', 'Gifts and home electronics'] },
+    { title: '💪 Health & activities', ideas: ['Get fit this summer', 'Join a gym', 'Learn to surf this weekend', 'Commute to work without the car'] },
+  ];
 
   /* =====================================================================
    * 5. INCOME + BILLS (recurring)
@@ -181,7 +190,7 @@
     { id: 'internet', name: 'Home internet',             category: 'bills',   amount: -75,    every: 'month',     day: 10 },
     { id: 'spotify',  name: 'Spotify',                   category: 'bills',   amount: -13.99, every: 'month',     day: 21 },
     { id: 'power',    name: 'Electricity (quarterly)',   category: 'bills',   amount: -186.4, every: 'quarter',   anchor: '2026-10-28' },
-    { id: 'japanAuto',name: 'Auto-transfer to Japan jar',category: 'savings', amount: -100,   every: 'month',     day: 1 },
+    { id: 'goalAuto', name: 'Auto-transfer to savings goal', category: 'savings', amount: -100,   every: 'month',     day: 1 },
   ];
 
   function occursOn(rec, iso) {
@@ -287,16 +296,16 @@
       id: 'skippedCoffee',
       label: 'Skipped coffee',
       skipSecondCoffee: true,
-      description: 'Ana skipped her afternoon coffee. The $5.80 she did not spend moves to the Japan jar.',
+      description: 'Ana skipped her afternoon coffee. The $5.80 she did not spend moves to her savings goal.',
       today: () => todayBase(true).concat([
-        tx(TODAY, '15:10', 'Japan jar: skipped afternoon coffee', 'savings', -COFFEE_PRICE, { auto: true }),
+        tx(TODAY, '15:10', 'Goal jar: skipped afternoon coffee', 'savings', -COFFEE_PRICE, { auto: true }),
       ]),
       apply: (s) => {
         s.goal.saved = round2(s.goal.saved + COFFEE_PRICE);
         s.streaks.noCoffeeDays = 1;
         return s;
       },
-      aiHint: 'Celebrate: $5.80 went to Japan. Show progress and a tiny streak.',
+      aiHint: 'Celebrate: $5.80 went to her savings goal. Show progress and a tiny streak.',
     },
     rentDueTomorrow: {
       id: 'rentDueTomorrow',
@@ -363,7 +372,7 @@
       goal: Object.assign({}, GOAL),
       accounts: {
         everyday: { name: 'Everyday account', balance },
-        japanJar: { name: 'Japan jar', balance: GOAL.saved },
+        goalJar: { name: 'Goal jar', balance: GOAL.saved },
       },
       transactions,
       todayTransactions: todayTx,
@@ -371,7 +380,7 @@
       streaks: { noCoffeeDays: 0 },
     };
     state = sc.apply(state);
-    state.accounts.japanJar.balance = state.goal.saved;
+    state.accounts.goalJar.balance = state.goal.saved;
     state.goal.progress = round2(state.goal.saved / state.goal.target);
     state.cashflow = cashflow(state);
     return state;
@@ -471,7 +480,7 @@
 
   /* ---------- export ---------- */
   const TM = {
-    TODAY, CATEGORIES, SOURCES, CARD_TIERS, SHOPS, USER, GOAL, RECURRING, SCENARIOS,
+    TODAY, CATEGORIES, SOURCES, CARD_TIERS, SHOPS, USER, GOAL, GOAL_IDEAS, RECURRING, SCENARIOS,
     getState: () => current,
     setScenario, setCardTier, onChange, mountScenarioSwitcher,
     visibleShops, coinsFor, distanceKm, spendByCategory, weeklyAverage,

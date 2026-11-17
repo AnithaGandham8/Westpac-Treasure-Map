@@ -8,7 +8,8 @@
  *   Engine.coins()           -> total coins in the counter
  *   Engine.nearYou(cat) / topHeroes(cat) / newHeroes(cat) / categories()
  *   Engine.reasonFor(shop)   -> short "why this?" line (rule-based for now)
- *   Engine.potBalance() / potHistory() / potBreakdown() / goalStats()
+ *   Engine.potBalance(id) / potHistory(id) / potBreakdown(id) / goalStats(id)   (id = goal, default active)
+ *   Engine.goals() / activeGoal() / setActiveGoal(id) / addGoal({name,emoji,target,deadline}) / setGoalTarget(id, price) / removeGoal(id)
  *   Engine.cashFlowCheck(amount) -> { mode: full|reduced|none, amount }  (shared with Skip & Save)
  *   Engine.mission() / simulateWeek(kind) / acceptReward() / setAutoSend(on)   (Me vs Me)
  *   Engine.onChange(fn)      -> fn({ type }) after useOffer / mission events / reset
@@ -79,7 +80,7 @@
     store.coins += coins;
     const entry = {
       date: TM.TODAY, time: nowTime(), type: 'coins', label: 'Coins: ' + shop.name,
-      amount: dollarsFor(coins), coins, shopId: id, fresh: true,
+      amount: dollarsFor(coins), coins, shopId: id, goalId: store.activeGoal, fresh: true,
     };
     store.session.push(entry);
     emit({ type: 'offer-used', entry, shop });
@@ -97,12 +98,11 @@
   const categories = () => [...new Set(visible().map((s) => s.category))];
 
   /* ---------- "why this?" (rule-based now; the AI version replaces this in Phase 3) ---------- */
-  // goal is optional: the goal typed in Discover ({ name, emoji, tags }); default is the saved goal
-  function reasonFor(shop, goal) {
-    const g = goal || TM.GOAL;
+  function reasonFor(shop) {
     const d = formatDistance(distanceFromUser(shop));
-    if (shop.tags.some((t) => g.tags.includes(t))) {
-      return `Matches your goal: ${g.name} ${g.emoji}. ${d} from work.`;
+    const goal = activeGoal();
+    if (goal && shop.tags.some((t) => goal.tags.includes(t))) {
+      return `Matches your goal: ${goal.name} ${goal.emoji}. ${d} from work.`;
     }
     if (['coffee', 'meals', 'groceries'].includes(shop.category)) {
       const weekly = TM.weeklyAverage(shop.category);
@@ -116,52 +116,150 @@
     return `${d} from work.`;
   }
 
-  /* ---------- Pot ---------- */
+  /* =====================================================================
+   * GOALS + POT
+   *   Ana can have several goals, each with its own price (target).
+   *   The ACTIVE goal is where new rewards go (coins, mission rewards).
+   *   The main goal (data.js GOAL) also owns the history from data.js
+   *   (auto-transfers, skipped spend, earlier savings).
+   * =================================================================== */
+  // Emoji -> shop tags, so "Why this?" can say "Matches your goal" for any goal
+  const GOAL_EMOJIS = {
+    '✈️': ['travel', 'flights', 'holiday', 'luggage', 'currency', 'overseas', 'trip', 'tours'],
+    '💻': ['electronics', 'department store', 'gifts'],
+    '🚗': ['fuel', 'petrol', 'car', 'road trip'],
+    '🏠': ['home', 'department store', 'groceries'],
+    '🎁': ['gifts', 'department store', 'clothes', 'shoes'],
+    '🎓': ['electronics', 'department store'],
+    '💪': ['gym', 'fitness', 'health', 'running', 'shoes'],
+    '🎟️': ['experience', 'weekend', 'surf', 'lessons'],
+    '🛟': [],
+  };
+  const MAX_GOAL_PRICE = 100000;
+  let goalSeq = 0;
+
+  function seedGoals() {
+    return [
+      { id: TM.GOAL.id, name: TM.GOAL.name, emoji: TM.GOAL.emoji, target: TM.GOAL.target, deadline: TM.GOAL.deadline, tags: TM.GOAL.tags, main: true },
+      { id: 'laptop', name: 'New laptop', emoji: '💻', target: 1800, deadline: '2027-03-01', tags: GOAL_EMOJIS['💻'], startSaved: 310 },
+    ];
+  }
+
+  const rawGoal = (id) => store.goals.find((g) => g.id === id);
+  const sessionFor = (id) => store.session.filter((e) => e.goalId === id);
+  function savedFor(g) {
+    const start = g.main ? state().goal.saved : g.startSaved || 0; // main goal follows the scenario (e.g. skipped coffee)
+    return r2(start + sessionFor(g.id).reduce((s, e) => s + e.amount, 0));
+  }
+  function decorate(g) {
+    const saved = savedFor(g);
+    return Object.assign({}, g, { saved, progress: g.target ? Math.min(1, saved / g.target) : 0, active: g.id === store.activeGoal });
+  }
+  const goals = () => store.goals.map(decorate);
+  const goalById = (id) => { const g = rawGoal(id); return g ? decorate(g) : null; };
+  const activeGoal = () => goalById(store.activeGoal) || goalById(TM.GOAL.id);
+
+  function setActiveGoal(id) {
+    if (!rawGoal(id)) return false;
+    store.activeGoal = id;
+    emit({ type: 'goal-active', id });
+    return true;
+  }
+  function cleanPrice(v) {
+    const n = Math.round(Number(v) * 100) / 100;
+    return Number.isFinite(n) && n >= 1 && n <= MAX_GOAL_PRICE ? n : null;
+  }
+  const priceError = () => `Set a price between $1 and $${MAX_GOAL_PRICE.toLocaleString('en-AU')}.`;
+  // Returns { ok, goal } or { ok: false, error } so the UI can show a friendly message
+  function addGoal({ name, emoji, target, deadline }) {
+    const clean = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 30);
+    const price = cleanPrice(target);
+    if (!clean) return { ok: false, error: 'Give your goal a name.' };
+    if (price === null) return { ok: false, error: priceError() };
+    if (store.goals.some((g) => g.name.toLowerCase() === clean.toLowerCase())) return { ok: false, error: 'You already have a goal with that name.' };
+    const e = GOAL_EMOJIS[emoji] ? emoji : '🛟';
+    const words = clean.toLowerCase().match(/[a-z]+/g) || [];
+    const g = {
+      id: 'g' + (++goalSeq) + '-' + Date.now().toString(36),
+      name: clean, emoji: e, target: price,
+      deadline: /^\d{4}-\d{2}-\d{2}$/.test(deadline || '') && deadline > TM.TODAY ? deadline : TM.util.addDays(TM.TODAY, 365),
+      tags: [...new Set(GOAL_EMOJIS[e].concat(words.filter((w) => w.length > 3)))],
+      custom: true, startSaved: 0,
+    };
+    store.goals.push(g);
+    store.activeGoal = g.id;
+    emit({ type: 'goal-added', goal: g });
+    return { ok: true, goal: decorate(g) };
+  }
+  function setGoalTarget(id, target) {
+    const g = rawGoal(id), price = cleanPrice(target);
+    if (!g) return { ok: false, error: 'Goal not found.' };
+    if (price === null) return { ok: false, error: priceError() };
+    g.target = price;
+    emit({ type: 'goal-price', id });
+    return { ok: true, goal: decorate(g) };
+  }
+  // Only goals you added, and only while they are empty (so no money is ever "lost")
+  function removeGoal(id) {
+    const g = rawGoal(id);
+    if (!g || !g.custom) return { ok: false, error: 'This goal cannot be removed.' };
+    if (savedFor(g) > 0) return { ok: false, error: 'This goal already has savings in it.' };
+    store.goals = store.goals.filter((x) => x.id !== id);
+    if (store.activeGoal === id) store.activeGoal = TM.GOAL.id;
+    emit({ type: 'goal-removed', id });
+    return { ok: true };
+  }
+
   function autoTransfers() {
     return state().transactions
-      .filter((t) => t.recurringId === 'japanAuto')
+      .filter((t) => t.recurringId === 'goalAuto')
       .map((t) => ({ date: t.date, time: t.time, type: 'auto', label: 'Monthly auto-transfer', amount: Math.abs(t.amount) }));
   }
   function todaySkips() {
     return state().todayTransactions
       .filter((t) => t.category === 'savings')
       .map((t) => {
-        const what = t.merchant.replace(/^Japan jar:\s*/i, '');
+        const what = t.merchant.replace(/^[\w ]*jar:\s*/i, '');
         return { date: t.date, time: t.time, type: 'skip', label: what.charAt(0).toUpperCase() + what.slice(1), amount: Math.abs(t.amount) };
       });
   }
 
-  function potHistory() {
-    const base = autoTransfers().concat(POT_SEED);
-    const opening = r2(TM.GOAL.saved - base.reduce((s, e) => s + e.amount, 0));
-    const list = base.concat(todaySkips(), store.session)
-      .sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+  function potHistory(id) {
+    const g = rawGoal(id || store.activeGoal) || rawGoal(TM.GOAL.id);
+    const byTime = (a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || ''));
     const firstDay = TM.util.addDays(TM.TODAY, -60);
-    list.push({ date: firstDay, type: 'earlier', label: 'Saved before this period', amount: opening });
+    if (g.main) {
+      const base = autoTransfers().concat(POT_SEED);
+      const opening = r2(TM.GOAL.saved - base.reduce((s, e) => s + e.amount, 0));
+      const list = base.concat(todaySkips(), sessionFor(g.id)).sort(byTime);
+      list.push({ date: firstDay, type: 'earlier', label: 'Saved before this period', amount: opening });
+      return list;
+    }
+    const list = sessionFor(g.id).slice().sort(byTime);
+    if (g.startSaved) list.push({ date: firstDay, type: 'earlier', label: 'Saved before this period', amount: g.startSaved });
     return list;
   }
 
-  const potBalance = () => r2(state().goal.saved + store.session.reduce((s, e) => s + e.amount, 0));
+  const potBalance = (id) => savedFor(rawGoal(id || store.activeGoal) || rawGoal(TM.GOAL.id));
 
-  function potBreakdown() {
+  function potBreakdown(id) {
     const totals = {};
-    potHistory().forEach((e) => { totals[e.type] = r2((totals[e.type] || 0) + e.amount); });
-    const sum = Object.values(totals).reduce((a, b) => a + b, 0);
+    potHistory(id).forEach((e) => { totals[e.type] = r2((totals[e.type] || 0) + e.amount); });
+    const sum = Object.values(totals).reduce((a, b) => a + b, 0) || 1;
     return Object.keys(POT_TYPES)
       .filter((k) => totals[k])
       .map((k) => ({ type: k, label: POT_TYPES[k].label, icon: POT_TYPES[k].icon, amount: totals[k], share: totals[k] / sum }));
   }
 
-  function goalStats() {
-    const g = state().goal;
-    const balance = potBalance();
+  function goalStats(id) {
+    const g = goalById(id || store.activeGoal) || activeGoal();
     const daysLeft = TM.util.daysBetween(TM.TODAY, g.deadline);
     const weeksLeft = Math.max(1, Math.round(daysLeft / 7));
-    const remaining = Math.max(0, g.target - balance);
+    const remaining = Math.max(0, g.target - g.saved);
     return {
-      name: g.name, emoji: g.emoji, target: g.target, deadline: g.deadline, balance,
-      progress: Math.min(1, balance / g.target), remaining: r2(remaining), weeksLeft,
-      perWeek: r2(remaining / weeksLeft),
+      id: g.id, name: g.name, emoji: g.emoji, target: g.target, deadline: g.deadline, balance: g.saved,
+      progress: g.progress, remaining: r2(remaining), weeksLeft, perWeek: r2(remaining / weeksLeft),
+      main: !!g.main, custom: !!g.custom, active: g.active,
     };
   }
 
@@ -332,7 +430,7 @@
       reward.actual = actual;
       reward.target = before.target;
       if (reward.amount <= 0) m.last.extra = 'Cash flow is very tight, so no money moves this week.';
-      else if (m.autoSend) { creditMission(reward.amount, reward.label); m.last.extra = `$${reward.amount.toFixed(2)} sent to your Japan Pot.`; }
+      else if (m.autoSend) { creditMission(reward.amount, reward.label); m.last.extra = `$${reward.amount.toFixed(2)} sent to your ${activeGoal().name} goal.`; }
       else m.pending = reward;
     }
     emit({ type: 'mission-week', mission: m, reward });
@@ -340,7 +438,7 @@
   }
 
   function creditMission(amount, label) {
-    const entry = { date: TM.TODAY, time: nowTime(), type: 'mission', label, amount: r2(amount), fresh: true };
+    const entry = { date: TM.TODAY, time: nowTime(), type: 'mission', label, amount: r2(amount), goalId: store.activeGoal, fresh: true };
     store.session.push(entry);
     emit({ type: 'mission-credit', entry });
     return entry;
@@ -349,7 +447,7 @@
     const m = store.mission;
     if (!m.pending) return null;
     const entry = creditMission(m.pending.amount, m.pending.label);
-    m.last.extra = `$${entry.amount.toFixed(2)} sent to your Japan Pot.`;
+    m.last.extra = `$${entry.amount.toFixed(2)} sent to your ${activeGoal().name} goal.`;
     m.pending = null;
     return entry;
   }
@@ -366,6 +464,8 @@
   const spentThisWeek = () => (store.mission.week === 0 ? weeklySpend(store.mission.category, WEEK_START) : 0);
 
   store.mission = newMission();
+  store.goals = seedGoals();
+  store.activeGoal = TM.GOAL.id;
 
   /* ---------- misc ---------- */
   function reset() {
@@ -373,6 +473,8 @@
     store.session = [];
     store.coins = START_COINS;
     store.mission = newMission();
+    store.goals = seedGoals();
+    store.activeGoal = TM.GOAL.id;
     emit({ type: 'reset' });
   }
   function onChange(fn) { listeners.push(fn); return () => listeners.splice(listeners.indexOf(fn), 1); }
@@ -383,6 +485,8 @@
     distanceFromUser, formatDistance,
     nearYou, topHeroes, newHeroes, categories, reasonFor,
     potBalance, potHistory, potBreakdown, goalStats,
+    // goals
+    GOAL_EMOJIS, MAX_GOAL_PRICE, goals, goalById, activeGoal, setActiveGoal, addGoal, setGoalTarget, removeGoal,
     // cash-flow check (Skip & Save should call this too)
     CASH, cashBuffer, cashFlowCheck,
     // Me vs Me

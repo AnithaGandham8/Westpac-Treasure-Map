@@ -357,8 +357,8 @@
         <span class="op">=</span>
         <div class="coin-total"><small>You get</small><b><i class="ci">${ICONS.coin}</i>${m.coins}</b></div>
       </div>
-      <p class="coin-note">≈ ${fmt(m.dollars)} goes to your ${TM.GOAL.emoji} ${esc(TM.GOAL.name)} Pot</p>
-      <div class="why" id="sheet-why"><span>💡 Why this?</span> <em id="sheet-why-text">${esc(E.reasonFor(s, window.AI.goal()))}</em></div>
+      <p class="coin-note">≈ ${fmt(m.dollars)} goes to your ${E.activeGoal().emoji} ${esc(E.activeGoal().name)} goal</p>
+      <div class="why" id="sheet-why"><span>💡 Why this?</span> <em id="sheet-why-text">${esc(E.reasonFor(s))}</em></div>
       <button type="button" class="btn-use ${used ? 'is-used' : ''}" id="btn-use" ${used ? 'disabled' : ''}>
         ${used ? '✓ Used today: coins are in your Pot' : `Use offer · collect ${m.coins} coins`}
       </button>
@@ -495,13 +495,28 @@
   let goalSeq = 0;
   function clearGoal() {
     goalSeq += 1;
-    window.AI.clearGoal(); // "Why this?" goes back to the saved goal
     $('#goal-result').innerHTML = '';
     highlightShops([]);
+    renderIdeas(true);
+  }
+  // Example goals under the search box (from data.js). Hidden while results are showing.
+  function renderIdeas(show) {
+    const box = $('#goal-ideas');
+    if (!box) return;
+    box.innerHTML = !show ? '' : `
+      <div class="ideas">
+        <div class="ideas-head">Try a goal</div>
+        ${TM.GOAL_IDEAS.map((g) => `
+          <div class="idea-group">
+            <div class="idea-title">${esc(g.title)}</div>
+            <div class="idea-row">${g.ideas.map((t) => `<button type="button" class="chip idea" data-idea="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+          </div>`).join('')}
+      </div>`;
   }
   async function runGoalSearch(text) {
     if (!text) return clearGoal();
     const seq = ++goalSeq;
+    renderIdeas(false);
     $('#goal-result').innerHTML = '<div class="card goal-card"><div class="ai-tag">AI · goal search</div><p class="muted small">Reading your goal…</p></div>';
     const res = await window.AI.goalSearch(text);
     if (seq !== goalSeq) return; // a newer search replaced this one
@@ -531,10 +546,82 @@
       const b = e.target.closest('[data-shop]');
       if (b) openOffer(b.dataset.shop);
     });
+    $('#goal-ideas').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-idea]');
+      if (!b) return;
+      input.value = b.dataset.idea;
+      runGoalSearch(b.dataset.idea);
+      $('#screen-discover').scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    renderIdeas(true);
   }
 
-  /* ======================= 8. Pot ======================= */
+  /* ======================= 8. Pot (multiple goals) ======================= */
   let lastPot = null;
+  const potUI = { adding: false, editing: false, error: '', emoji: '💻' };
+  const GOAL_EMOJI_LABELS = { '✈️': 'Travel', '💻': 'Tech', '🚗': 'Car', '🏠': 'Home', '🎁': 'Gift', '🎓': 'Study', '💪': 'Fitness', '🎟️': 'Event', '🛟': 'Safety net' };
+
+  function goalStrip() {
+    return `
+      <div class="goal-strip" role="list">
+        ${E.goals().map((g) => `
+          <button type="button" role="listitem" class="goal-chip ${g.active ? 'is-active' : ''}" data-goal="${g.id}" aria-pressed="${g.active}">
+            <span class="gc-top"><span class="gc-emoji">${g.emoji}</span>${g.active ? '<span class="gc-badge">Saving</span>' : ''}</span>
+            <span class="gc-name">${esc(g.name)}</span>
+            <span class="gc-bar"><i style="width:${(g.progress * 100).toFixed(1)}%"></i></span>
+            <span class="gc-amt">${fmt0(g.saved)} <small>of ${fmt0(g.target)}</small></span>
+          </button>`).join('')}
+        <button type="button" class="goal-chip add" id="goal-add" aria-expanded="${potUI.adding}">
+          <span class="gc-plus">＋</span><span class="gc-name">New goal</span>
+        </button>
+      </div>`;
+  }
+
+  function addGoalForm() {
+    if (!potUI.adding) return '';
+    return `
+      <form class="card goal-form" id="goal-form" novalidate>
+        <b>New goal</b>
+        <label class="field"><span>What are you saving for?</span>
+          <input name="name" maxlength="30" placeholder="e.g. New laptop" required autocomplete="off"></label>
+        <div class="field"><span>Pick an icon</span>
+          <div class="emoji-row" role="radiogroup" aria-label="Goal icon">
+            ${Object.keys(E.GOAL_EMOJIS).map((e) => `<button type="button" class="emoji-opt ${e === potUI.emoji ? 'is-active' : ''}" data-emoji="${e}" role="radio" aria-checked="${e === potUI.emoji}" title="${GOAL_EMOJI_LABELS[e]}">${e}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field"><span>Price ($)</span>
+            <input name="target" type="number" inputmode="decimal" min="1" max="${E.MAX_GOAL_PRICE}" step="1" placeholder="1800" required></label>
+          <label class="field"><span>By when? <small>(optional)</small></span>
+            <input name="deadline" type="date" min="${TM.util.addDays(TM.TODAY, 1)}"></label>
+        </div>
+        ${potUI.error ? `<p class="form-error" role="alert">${esc(potUI.error)}</p>` : ''}
+        <div class="form-btns">
+          <button type="submit" class="btn-yes">Create goal</button>
+          <button type="button" class="btn-no" data-action="cancel-add">Cancel</button>
+        </div>
+      </form>`;
+  }
+
+  function priceEditor(g) {
+    if (!potUI.editing) {
+      return `<div class="goal-actions">
+        <button type="button" class="link-btn" data-action="edit-price">✏️ Set price</button>
+        ${g.custom && g.balance === 0 ? '<button type="button" class="link-btn danger" data-action="remove-goal">Remove goal</button>' : ''}
+      </div>`;
+    }
+    return `
+      <form class="price-form" id="price-form" novalidate>
+        <label class="field"><span>New price for ${esc(g.name)} ($)</span>
+          <input name="target" type="number" inputmode="decimal" min="1" max="${E.MAX_GOAL_PRICE}" step="1" value="${Math.round(g.target)}" required></label>
+        ${potUI.error ? `<p class="form-error" role="alert">${esc(potUI.error)}</p>` : ''}
+        <div class="form-btns">
+          <button type="submit" class="btn-yes">Save price</button>
+          <button type="button" class="btn-no" data-action="cancel-price">Cancel</button>
+        </div>
+      </form>`;
+  }
+
   function renderPot(clearFresh) {
     const g = E.goalStats();
     const R = 72, C = 2 * Math.PI * R;
@@ -542,9 +629,13 @@
     const recent = E.potBreakdown().filter((b) => b.type !== 'earlier');
     const recentSum = recent.reduce((s, b) => s + b.amount, 0);
     const earlier = E.potBreakdown().find((b) => b.type === 'earlier');
-    const prev = lastPot || g;
+    const prev = lastPot && lastPot.id === g.id ? lastPot : g; // only animate within the same goal
 
     $('#pot').innerHTML = `
+      ${goalStrip()}
+      ${addGoalForm()}
+      <p class="goal-note">🎯 New rewards go to <b>${g.emoji} ${esc(g.name)}</b>. Tap a goal to switch.</p>
+
       <div class="pot-hero">
         <div class="ring">
           <svg viewBox="0 0 180 180">
@@ -559,6 +650,7 @@
           </div>
         </div>
         <h2>${esc(g.name)}</h2>
+        ${priceEditor(g)}
         <div class="pot-stats">
           <div><b>${Math.round(g.progress * 100)}%</b><small>done</small></div>
           <div><b>${g.weeksLeft}</b><small>weeks left</small></div>
@@ -566,31 +658,78 @@
         </div>
       </div>
 
+      ${recent.length ? `
       <h3 class="pot-h">Where it came from <span>last 60 days</span></h3>
-      <div class="stack">${recent.map((b) => `<span class="stack-seg t-${b.type}" style="width:${((b.amount / recentSum) * 100).toFixed(2)}%" title="${esc(b.label)}"></span>`).join('')}</div>
+      <div class="stack">${recent.map((b) => `<span class="stack-seg t-${b.type}" style="width:${((b.amount / recentSum) * 100).toFixed(2)}%" title="${esc(b.label)}"></span>`).join('')}</div>` : ''}
       <div class="stack-legend">
         ${recent.map((b) => `<span><i class="dot t-${b.type}"></i>${b.icon} ${esc(b.label)}<b>${fmt(b.amount)}</b></span>`).join('')}
         ${earlier ? `<span class="muted"><i class="dot t-earlier"></i>${earlier.icon} ${esc(earlier.label)}<b>${fmt(earlier.amount)}</b></span>` : ''}
       </div>
 
       <h3 class="pot-h">History</h3>
-      <ul class="history">
+      ${hist.length ? `<ul class="history">
         ${hist.map((h) => `
           <li class="${h.fresh ? 'is-fresh' : ''}">
             <span class="h-ico t-${h.type}">${E.POT_TYPES[h.type].icon}</span>
             <span class="h-main"><b>${esc(h.label)}</b><small>${dateLabel(h.date)}${h.time ? ' · ' + h.time : ''}${h.coins ? ' · ' + h.coins + ' coins' : ''}</small></span>
             <span class="h-amt">+${fmt(h.amount)}</span>
           </li>`).join('')}
-      </ul>`;
+      </ul>` : '<p class="muted small">Nothing saved here yet. Use an offer on the Map or hit a Mission, and the coins land in this goal.</p>'}`;
 
-    // animate ring + amount from the last value we showed
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const fg = $('#ring-fg');
       if (fg) fg.setAttribute('stroke-dashoffset', (C * (1 - g.progress)).toFixed(2));
     }));
     countMoney($('#pot-amt'), prev.balance, g.balance);
+    const strip = $('.goal-strip'), chip = $('.goal-chip.is-active');
+    if (strip && chip && (chip.offsetLeft < strip.scrollLeft || chip.offsetLeft + chip.offsetWidth > strip.scrollLeft + strip.clientWidth)) {
+      strip.scrollTo({ left: chip.offsetLeft - 16, behavior: 'smooth' }); // keep the active goal in view
+    }
     lastPot = g;
     if (clearFresh) setTimeout(() => hist.forEach((h) => { h.fresh = false; }), 2500);
+  }
+
+  // One set of listeners on #pot (its content is re-drawn, the container is not)
+  function bindPot() {
+    const pot = $('#pot');
+    const done = (msg) => { potUI.adding = false; potUI.editing = false; potUI.error = ''; renderPot(); renderFeed(); refreshSheet(); if (msg) toast(msg); };
+    pot.addEventListener('click', (e) => {
+      const chip = e.target.closest('[data-goal]');
+      if (chip) {
+        if (E.setActiveGoal(chip.dataset.goal)) { const g = E.activeGoal(); potUI.editing = false; done(`🎯 Now saving for ${g.emoji} ${g.name}`); }
+        return;
+      }
+      if (e.target.closest('#goal-add')) { potUI.adding = !potUI.adding; potUI.editing = false; potUI.error = ''; renderPot(); if (potUI.adding) { const i = $('#goal-form input[name="name"]'); if (i) i.focus(); } return; }
+      const em = e.target.closest('[data-emoji]');
+      if (em) {
+        potUI.emoji = em.dataset.emoji;
+        $$('#goal-form .emoji-opt').forEach((b) => { const on = b.dataset.emoji === potUI.emoji; b.classList.toggle('is-active', on); b.setAttribute('aria-checked', on); });
+        return;
+      }
+      const act = e.target.closest('[data-action]');
+      if (!act) return;
+      const a = act.dataset.action;
+      if (a === 'cancel-add' || a === 'cancel-price') { potUI.adding = false; potUI.editing = false; potUI.error = ''; renderPot(); }
+      if (a === 'edit-price') { potUI.editing = true; potUI.adding = false; potUI.error = ''; renderPot(); const i = $('#price-form input'); if (i) { i.focus(); i.select(); } }
+      if (a === 'remove-goal') {
+        const g = E.activeGoal(), r = E.removeGoal(g.id);
+        if (r.ok) done(`Removed ${g.emoji} ${g.name}`); else toast(r.error);
+      }
+    });
+    pot.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = e.target;
+      if (f.id === 'goal-form') {
+        const r = E.addGoal({ name: f.name.value, emoji: potUI.emoji, target: f.target.value, deadline: f.deadline.value });
+        if (!r.ok) { potUI.error = r.error; const keep = { name: f.name.value, target: f.target.value, deadline: f.deadline.value }; renderPot(); const nf = $('#goal-form'); nf.name.value = keep.name; nf.target.value = keep.target; nf.deadline.value = keep.deadline; return; }
+        done(`New goal: ${r.goal.emoji} ${r.goal.name} (${fmt0(r.goal.target)})`);
+      }
+      if (f.id === 'price-form') {
+        const g = E.activeGoal(), r = E.setGoalTarget(g.id, f.target.value);
+        if (!r.ok) { potUI.error = r.error; renderPot(); return; }
+        done(`Price set: ${g.emoji} ${g.name} is now ${fmt0(r.goal.target)}`);
+      }
+    });
   }
   function countMoney(el, from, to) {
     if (!el || from === to) return;
@@ -636,6 +775,7 @@
     bindPowerup();
     bindFeed();
     bindGoalSearch();
+    bindPot();
 
     $$('.tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
     $('#coin-counter').addEventListener('click', () => showTab('pot'));
@@ -648,6 +788,7 @@
       E.reset();
       closeSheet();
       lastPot = null;
+      potUI.adding = false; potUI.editing = false; potUI.error = '';
       renderAll();
       animateCount(E.coins());
       $('#pot-dot').classList.remove('is-on');

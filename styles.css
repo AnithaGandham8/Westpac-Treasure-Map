@@ -696,3 +696,60 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .insight p { margin: 4px 0; }
 .small { font-size: 13px; }
 #sheet-why em { font-style: normal; }
+
+/* ---------- Pot: multiple goals ---------- */
+.goal-strip { display: flex; gap: 10px; overflow-x: auto; margin: 4px -16px 0; padding: 4px 16px 8px; scrollbar-width: none; scroll-snap-type: x mandatory; }
+.goal-strip::-webkit-scrollbar { display: none; }
+.goal-chip {
+  flex: none; width: 138px; scroll-snap-align: start;
+  display: flex; flex-direction: column; gap: 5px; text-align: left;
+  padding: 11px 12px; border-radius: 16px;
+  border: 1.5px solid var(--line); background: var(--panel);
+  transition: border-color .2s, transform .15s, box-shadow .2s;
+}
+.goal-chip:active { transform: scale(.98); }
+.goal-chip.is-active { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 201, 60, .2); }
+.gc-top { display: flex; align-items: center; justify-content: space-between; }
+.gc-emoji { font-size: 22px; line-height: 1; }
+.gc-badge { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 999px; background: var(--gold); color: #2a1a00; }
+.gc-name { font-weight: 800; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gc-bar { display: block; height: 6px; border-radius: 999px; background: rgba(127, 127, 127, .2); overflow: hidden; }
+.gc-bar i { display: block; height: 100%; border-radius: 999px; background: var(--gold); }
+.gc-amt { font-size: 12.5px; font-weight: 800; }
+.gc-amt small { font-weight: 600; color: var(--muted); }
+.goal-chip.add { align-items: center; justify-content: center; border-style: dashed; color: var(--muted); }
+.gc-plus { font-size: 26px; line-height: 1; font-weight: 400; }
+.goal-note { font-size: 12.5px; color: var(--muted); margin: 6px 0 4px; }
+.goal-note b { color: var(--text); }
+
+.goal-form { display: grid; gap: 12px; }
+.field { display: grid; gap: 5px; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.field small { font-weight: 500; }
+.field input {
+  width: 100%; padding: 10px 12px; border-radius: 12px;
+  border: 1.5px solid var(--line); background: var(--panel-2);
+  color: var(--text); font: inherit; font-size: 15px; font-weight: 600;
+}
+.field input:focus { outline: none; border-color: var(--sky); box-shadow: 0 0 0 3px rgba(92, 200, 255, .18); }
+.field-row { display: grid; grid-template-columns: 1fr 1.25fr; gap: 10px; }
+.emoji-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.emoji-opt {
+  width: 40px; height: 40px; border-radius: 12px; font-size: 20px;
+  border: 1.5px solid var(--line); background: var(--panel-2);
+}
+.emoji-opt.is-active { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 201, 60, .25); }
+.form-error { margin: 0; font-size: 12.5px; font-weight: 700; color: var(--coral); }
+.form-btns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; }
+.goal-actions { display: flex; justify-content: center; gap: 16px; margin: -4px 0 12px; }
+.link-btn { background: none; border: 0; padding: 4px 0; font-weight: 800; font-size: 13px; color: var(--sky); }
+.link-btn.danger { color: var(--coral); }
+.price-form { display: grid; gap: 10px; text-align: left; margin: 0 0 12px; }
+
+/* ---------- goal ideas (under the goal search) ---------- */
+.ideas { margin-top: 14px; }
+.ideas-head { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
+.idea-group { margin-top: 10px; }
+.idea-title { font-size: 13px; font-weight: 800; margin-bottom: 6px; }
+.idea-row { display: flex; gap: 6px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 4px; scrollbar-width: none; }
+.idea-row::-webkit-scrollbar { display: none; }
+.chip.idea { font-weight: 600; }

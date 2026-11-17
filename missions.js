@@ -35,10 +35,11 @@
   ];
 
   let shownTarget = null;
+  const goalName = () => { const g = E.activeGoal(); return `${g.emoji} ${g.name}`; };
 
   function rewardText(rw) {
-    if (rw.mode === 'full') return `Hit it and <b>${money(rw.amount)}</b> goes to your Japan Pot.`;
-    if (rw.mode === 'reduced') return `Hit it and <b>${money(rw.amount)}</b> goes to your Japan Pot. Reduced, because cash flow is tight.`;
+    if (rw.mode === 'full') return `Hit it and <b>${money(rw.amount)}</b> goes to your ${esc(goalName())} goal.`;
+    if (rw.mode === 'reduced') return `Hit it and <b>${money(rw.amount)}</b> goes to your ${esc(goalName())} goal. Reduced, because cash flow is tight.`;
     return 'Cash flow is very tight right now, so no money moves even if you hit it.';
   }
 
@@ -84,7 +85,7 @@
 
       ${p ? `<div class="card prompt" id="m-prompt">
         <div class="ai-tag">✨ Ask first</div>
-        <p class="prompt-q">You hit your ${esc(name)} target. Send <b>${money(p.amount)}</b> to your Japan Pot?</p>
+        <p class="prompt-q">You hit your ${esc(name)} target. Send <b>${money(p.amount)}</b> to your ${esc(goalName())} goal?</p>
         <div class="prompt-btns">
           <button type="button" class="btn-yes" id="m-yes">Yes, send ${money(p.amount)}</button>
           <button type="button" class="btn-no" id="m-no">Not now</button>
@@ -156,7 +157,7 @@
         const btn = e.currentTarget;
         E.acceptReward();
         App.sendToPot(btn);
-        App.toast(`🎯 ${money(p.amount)} sent to your Japan Pot`);
+        App.toast(`🎯 ${money(p.amount)} sent to ${goalName()}`);
         render();
       };
       $('#m-no').onclick = () => E.declineReward();
@@ -192,7 +193,7 @@
     if (out.reward && out.reward.amount > 0 && E.mission().autoSend) {
       const banner = $('#m-banner');
       if (banner) App.sendToPot(banner);
-      App.toast(`🎯 ${money(out.reward.amount)} sent to your Japan Pot`);
+      App.toast(`🎯 ${money(out.reward.amount)} sent to ${goalName()}`);
     } else if (out.result === 'levelup') {
       App.toast(`⬆️ Level ${E.mission().level}! New target ${money0(E.mission().target)}`);
     } else if (out.result === 'eased') {
@@ -202,7 +203,7 @@
 
   function init() {
     render();
-    E.onChange((evt) => { if (/^mission|reset/.test(evt.type)) render(); });
+    E.onChange((evt) => { if (/^mission|^goal|reset/.test(evt.type)) render(); });
     TM.onChange(render); // scenario changes the cash-flow buffer -> reward
     window.Missions = { render, playWeek };
   }
