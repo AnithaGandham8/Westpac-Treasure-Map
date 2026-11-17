@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Westpac Treasure Map</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="stage">
+    <div class="mobile-frame" id="app">
+      <div class="phone-top-bar">
+        <span>9:41</span>
+        <div class="dynamic-island"></div>
+        <span class="status-right">5G</span>
+      </div>
+
+      <!-- Tab panels: each phase fills one of these -->
+      <section class="screen-content tab-panel active" id="tab-map" aria-label="Map">
+        <h1 class="h2-text">Treasure Map</h1>
+        <p class="caption-reg">Rewards Westpac already pays for, finally in sight.</p>
+        <div class="card">
+          <div class="ai-tag">AI · scaffold check</div>
+          <p class="body-reg" id="scaffold-status">Loading…</p>
+        </div>
+        <!-- Phase 2: SVG map, chests, power-up switcher, feed -->
+      </section>
+
+      <section class="screen-content tab-panel" id="tab-pot" aria-label="Pot">
+        <h1 class="h2-text">Japan pot</h1>
+        <p class="caption-reg">Phase 2: balance, progress ring, where each dollar came from.</p>
+      </section>
+
+      <section class="screen-content tab-panel" id="tab-missions" aria-label="Missions">
+        <h1 class="h2-text">Me vs Me</h1>
+        <p class="caption-reg">Phase 4: weekly targets and levels.</p>
+      </section>
+
+      <!-- Phase 3: Skip & Save prompt slides in here -->
+      <div id="prompt-layer"></div>
+
+      <nav class="bottom-nav">
+        <button class="nav-item active" data-tab="map">Map</button>
+        <button class="nav-item" data-tab="pot">Pot</button>
+        <button class="nav-item" data-tab="missions">Missions</button>
+      </nav>
+    </div>
+
+    <!-- Hidden demo panel (open with the D key) -->
+    <aside class="demo-panel" id="demo-panel" hidden>
+      <strong>Demo controls</strong>
+      <label><input type="radio" name="scenario" value="normal" checked> Normal day</label>
+      <label><input type="radio" name="scenario" value="skipped"> Skipped coffee</label>
+      <label><input type="radio" name="scenario" value="rent"> Rent due tomorrow</label>
+      <button class="btn-secondary" id="btn-reset">Reset demo</button>
+    </aside>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

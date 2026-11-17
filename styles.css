@@ -1,0 +1,169 @@
+/* Westpac Treasure Map: GEL tokens carried over from the Together prototype */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --wp-red: #DA1710;            /* primary action, progress arc, active nav only */
+  --wp-indigo: #1F1C4F;         /* headings, big money */
+  --wp-text-primary: #181B25;
+  --wp-text-secondary: #595767;
+  --wp-bg-screen: #F3F4F6;
+  --wp-bg-card: #FFFFFF;
+  --wp-border-card: #DEDEE1;
+
+  /* AI accent: AI-generated content only */
+  --wp-ai-accent: #0074C4;
+  --wp-ai-bg: #EBF4FB;
+  --wp-ai-border: #BFDBEF;
+
+  --wp-success: #008000;
+  --wp-danger: #C40000;
+  --wp-warning: #C53B00;
+
+  /* Treasure Map addition: coins */
+  --coin-gold: #F2B01E;
+  --coin-gold-dark: #B97A00;
+
+  --radius-card: 16px;
+  --radius-btn: 12px;
+  --radius-pill: 999px;
+  --radius-badge: 8px;
+
+  --shadow-card: 0 1px 2px rgba(24,27,37,.04), 0 4px 12px rgba(24,27,37,.06);
+  --shadow-float: 0 8px 24px rgba(24,27,37,.12), 0 2px 6px rgba(24,27,37,.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #242731;
+  color: var(--wp-text-primary);
+  line-height: 1.4;
+  min-height: 100vh;
+}
+
+.stage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+}
+
+/* Type */
+.h2-text { font-size: 20px; line-height: 26px; font-weight: 600; color: var(--wp-indigo); }
+.h3-text { font-size: 17px; line-height: 24px; font-weight: 600; color: var(--wp-indigo); }
+.body-reg { font-size: 15px; line-height: 22px; }
+.body-semi { font-size: 15px; line-height: 22px; font-weight: 600; color: var(--wp-indigo); }
+.caption-reg { font-size: 13px; line-height: 18px; color: var(--wp-text-secondary); }
+.caption-semi { font-size: 13px; line-height: 18px; font-weight: 600; }
+.display-money { font-size: 32px; line-height: 38px; font-weight: 600; letter-spacing: -0.02em; color: var(--wp-indigo); }
+
+/* Phone frame 393 x 852 */
+.mobile-frame {
+  width: 393px;
+  height: 852px;
+  max-height: calc(100vh - 32px);
+  background: var(--wp-bg-screen);
+  border-radius: 44px;
+  border: 8px solid #000;
+  box-shadow: 0 25px 60px -15px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.05);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.phone-top-bar {
+  height: 48px; padding: 0 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 14px; font-weight: 600;
+}
+.status-right { font-size: 11px; }
+.dynamic-island {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  width: 124px; height: 35px; background: #000; border-radius: 20px; z-index: 100;
+}
+
+/* Tab panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: flex; }
+.screen-content {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 8px 16px 90px;
+  flex-direction: column; gap: 16px;
+  scrollbar-width: thin;
+}
+
+/* Bottom nav */
+.bottom-nav {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 74px;
+  background: #fff; border-top: 1px solid var(--wp-border-card);
+  display: flex; align-items: center; justify-content: space-around;
+  padding-bottom: 12px; z-index: 40;
+}
+.nav-item {
+  background: none; border: none; font-family: inherit;
+  font-size: 13px; font-weight: 500; color: var(--wp-text-secondary);
+  padding: 10px 20px; cursor: pointer; min-height: 44px;
+}
+.nav-item.active { color: var(--wp-red); font-weight: 600; }
+.nav-item:focus-visible, .btn-primary:focus-visible, .btn-secondary:focus-visible {
+  outline: 2px solid var(--wp-indigo); outline-offset: 2px;
+}
+
+/* Cards and buttons */
+.card {
+  background: var(--wp-bg-card); border: 1px solid var(--wp-border-card);
+  border-radius: var(--radius-card); padding: 16px; box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.btn-primary {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 48px; padding: 0 20px;
+  background: var(--wp-red); color: #fff; border: none;
+  border-radius: var(--radius-btn); font: 600 15px/22px inherit; font-family: inherit; cursor: pointer;
+}
+.btn-secondary {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 16px; background: #fff; color: var(--wp-indigo);
+  border: 1px solid var(--wp-border-card); border-radius: var(--radius-btn);
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
+/* AI accent chips: AI content only */
+.ai-tag {
+  display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+  font-size: 11px; font-weight: 600; color: var(--wp-ai-accent);
+  background: var(--wp-ai-bg); padding: 4px 10px; border-radius: var(--radius-pill);
+}
+.chip-ai-extracted {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+  border-radius: var(--radius-pill); background: #fff; border: 1px solid var(--wp-ai-border);
+}
+.chip-ai-extracted .tag-name { font-size: 11px; font-weight: 600; color: var(--wp-ai-accent); }
+.chip-ai-extracted .tag-val { font-size: 13px; font-weight: 600; color: var(--wp-indigo); }
+.chip-keyword {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 12px;
+  border-radius: var(--radius-pill); background: var(--wp-ai-bg); color: var(--wp-ai-accent);
+  font-size: 13px; font-weight: 500;
+}
+
+/* Slide-in layer for Skip & Save (Phase 3) */
+#prompt-layer { position: absolute; left: 0; right: 0; bottom: 74px; z-index: 60; padding: 0 12px; }
+
+/* Hidden demo panel */
+.demo-panel {
+  background: #1E222D; color: #fff; padding: 16px; border-radius: 12px;
+  display: flex; flex-direction: column; gap: 10px; font-size: 13px; width: 200px;
+}
+.demo-panel[hidden] { display: none; }
+.demo-panel label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+
+@media (max-width: 480px) {
+  .stage { padding: 0; }
+  .mobile-frame { width: 100vw; height: 100vh; max-height: none; border: none; border-radius: 0; }
+  .dynamic-island { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
