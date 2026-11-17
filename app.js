@@ -610,7 +610,7 @@
     window.addEventListener('resize', renderMap);
   }
 
-  // Hooks for Phase 3 (goal search, AI picks, challenges)
+  // Hooks for other tabs (goal search, AI picks, Missions)
   // Coins fly from an element to the Pot tab, then the Pot refreshes (used by Me vs Me)
   function sendToPot(fromEl) {
     coinBurst(fromEl, $('[data-tab="pot"]'), () => {

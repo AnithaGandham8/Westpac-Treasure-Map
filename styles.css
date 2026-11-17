@@ -647,11 +647,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .week-btns { display: flex; flex-wrap: wrap; gap: 6px; }
 .tab.bump span { animation: bump .5s cubic-bezier(.3, 1.8, .5, 1); }
 
-/* ---------- placeholder ---------- */
-.placeholder { text-align: center; padding: 70px 20px; color: var(--muted); }
-.placeholder-emoji { font-size: 54px; }
-.placeholder h2 { color: var(--text); margin: 10px 0 6px; }
-
 /* ---------- demo controls ---------- */
 .demo {
   width: 230px;
