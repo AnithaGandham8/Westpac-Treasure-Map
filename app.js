@@ -358,7 +358,7 @@
         <div class="coin-total"><small>You get</small><b><i class="ci">${ICONS.coin}</i>${m.coins}</b></div>
       </div>
       <p class="coin-note">≈ ${fmt(m.dollars)} goes to your ${TM.GOAL.emoji} ${esc(TM.GOAL.name)} Pot</p>
-      <div class="why" id="sheet-why"><span>💡 Why this?</span> <em id="sheet-why-text">${esc(E.reasonFor(s))}</em></div>
+      <div class="why" id="sheet-why"><span>💡 Why this?</span> <em id="sheet-why-text">${esc(E.reasonFor(s, window.AI.goal()))}</em></div>
       <button type="button" class="btn-use ${used ? 'is-used' : ''}" id="btn-use" ${used ? 'disabled' : ''}>
         ${used ? '✓ Used today: coins are in your Pot' : `Use offer · collect ${m.coins} coins`}
       </button>
@@ -495,6 +495,7 @@
   let goalSeq = 0;
   function clearGoal() {
     goalSeq += 1;
+    window.AI.clearGoal(); // "Why this?" goes back to the saved goal
     $('#goal-result').innerHTML = '';
     highlightShops([]);
   }
