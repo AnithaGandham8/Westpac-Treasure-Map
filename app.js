@@ -36,11 +36,22 @@
   }
 
   const ICONS = {
-    chest: '<svg viewBox="0 0 32 32"><path d="M4 15h24v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="#a85a1c"/><path d="M4 15a12 9 0 0 1 24 0z" fill="#e08a2c"/><rect x="8" y="9" width="2.5" height="19" fill="#ffc93c" opacity=".6"/><rect x="21.5" y="9" width="2.5" height="19" fill="#ffc93c" opacity=".6"/><rect x="4" y="14" width="24" height="3" fill="#ffc93c"/><rect x="13.5" y="16" width="5" height="6" rx="1.2" fill="#ffe08a" stroke="#7a3f10" stroke-width=".8"/></svg>',
-    bag: '<svg viewBox="0 0 32 32"><path d="M12 11V9a4 4 0 0 1 8 0v2" fill="none" stroke="#ffd6d6" stroke-width="2.2" stroke-linecap="round"/><path d="M6.5 11h19l-1.6 15.4A2 2 0 0 1 21.9 28H10.1a2 2 0 0 1-2-1.6z" fill="#ff6b6b"/><path d="M6.5 11h19l-.3 3H6.8z" fill="#ff9a9a"/><text x="16" y="24.6" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="system-ui,sans-serif">$</text></svg>',
-    gem: '<svg viewBox="0 0 32 32"><path d="M9 5h14l6 8-13 15L3 13z" fill="#5cc8ff"/><path d="M3 13h26L23 5H9z" fill="#a8e6ff"/><path d="M3 13h26M12.5 13 16 5l3.5 8L16 28z" fill="none" stroke="#eafaff" stroke-width="1.1" stroke-linejoin="round"/></svg>',
-    coin: '<svg viewBox="0 0 32 32"><circle cx="16" cy="16.5" r="14" fill="#e08a00"/><circle cx="16" cy="15" r="13" fill="#ffc93c"/><circle cx="16" cy="15" r="9.5" fill="none" stroke="#f59e0b" stroke-width="1.6"/><path d="M16 9.5l1.7 3.5 3.8.5-2.8 2.6.7 3.8L16 18l-3.4 1.9.7-3.8-2.8-2.6 3.8-.5z" fill="#fff4cc"/></svg>',
+    chest: '<i class="bi bi-gift-fill" aria-hidden="true"></i>',
+    bag: '<i class="bi bi-bag" aria-hidden="true"></i>',
+    gem: '<i class="bi bi-gem" aria-hidden="true"></i>',
+    coin: '<i class="bi bi-coin" aria-hidden="true"></i>',
   };
+  const CATEGORY_ICONS = {
+    all: 'bi-grid', coffee: 'bi-cup-hot', meals: 'bi-egg-fried', groceries: 'bi-cart3',
+    baked: 'bi-basket2', treats: 'bi-cup-straw', travel: 'bi-airplane', fuel: 'bi-fuel-pump',
+    fashion: 'bi-bag', department: 'bi-shop', fitness: 'bi-activity', transport: 'bi-scooter',
+    experiences: 'bi-stars', delivery: 'bi-bicycle', rideshare: 'bi-car-front', rent: 'bi-house',
+    bills: 'bi-receipt', income: 'bi-cash-coin', savings: 'bi-safe2',
+  };
+  const POT_ICONS = { coins: 'bi-coin', skip: 'bi-skip-forward', mission: 'bi-bullseye', auto: 'bi-arrow-repeat', earlier: 'bi-wallet2' };
+  const icon = (name) => `<i class="bi ${name}" aria-hidden="true"></i>`;
+  const categoryIcon = (category) => icon(CATEGORY_ICONS[category] || 'bi-tag');
+  const potIcon = (type) => icon(POT_ICONS[type] || 'bi-circle');
   const SOURCE_ICON = { Extras: 'chest', ShopBack: 'bag', Altitude: 'gem' };
   const srcClass = (s) => 'src-' + s.source.toLowerCase();
 
@@ -118,13 +129,13 @@
 
   /* ======================= 3. map view ======================= */
   const AREAS = [
-    { id: 'near', label: '📍 Near me', lat: -28.006, lng: 153.428, span: 0.045 },
+    { id: 'near', label: 'Near me', lat: -28.006, lng: 153.428, span: 0.045 },
     { id: 'southport', label: 'Southport', lat: -27.968, lng: 153.404, span: 0.035 },
     { id: 'broadbeach', label: 'Broadbeach', lat: -28.036, lng: 153.433, span: 0.045 },
     { id: 'burleigh', label: 'Burleigh', lat: -28.096, lng: 153.455, span: 0.05 },
     { id: 'robina', label: 'Robina', lat: -28.078, lng: 153.386, span: 0.035 },
     { id: 'coolangatta', label: 'Coolangatta', lat: -28.166, lng: 153.522, span: 0.06 },
-    { id: 'all', label: '🌏 Whole coast', lat: -28.06, lng: 153.455, span: 0.2 },
+    { id: 'all', label: 'Whole coast', lat: -28.06, lng: 153.455, span: 0.2 },
   ];
   const view = { lat: AREAS[0].lat, lng: AREAS[0].lng, span: AREAS[0].span };
   let mapSize = { w: 1, h: 1 };
@@ -214,8 +225,10 @@
   }
 
   function buildChips() {
-    $('#map-chips').innerHTML = AREAS.map((a) =>
-      `<button type="button" class="chip ${a.id === 'near' ? 'is-active' : ''}" data-area="${a.id}">${esc(a.label)}</button>`).join('');
+    $('#map-chips').innerHTML = AREAS.map((a) => {
+      const marker = a.id === 'near' ? icon('bi-geo-alt') : a.id === 'all' ? icon('bi-globe2') : '';
+      return `<button type="button" class="chip ${a.id === 'near' ? 'is-active' : ''}" data-area="${a.id}">${marker}${esc(a.label)}</button>`;
+    }).join('');
     $('#map-chips').addEventListener('click', (e) => {
       const b = e.target.closest('[data-area]');
       if (b) goArea(b.dataset.area);
@@ -342,9 +355,9 @@
         <div class="sheet-icon ${srcClass(s)}">${ICONS[SOURCE_ICON[s.source]]}</div>
         <div class="sheet-title-wrap">
           <h3 id="sheet-title">${esc(s.name)}</h3>
-          <div class="muted">${cat.emoji} ${esc(cat.label)} · ${esc(s.suburb)} · ${E.formatDistance(E.distanceFromUser(s))}</div>
+          <div class="muted">${categoryIcon(s.category)} ${esc(cat.label)} · ${esc(s.suburb)} · ${E.formatDistance(E.distanceFromUser(s))}</div>
         </div>
-        <button type="button" class="sheet-close" aria-label="Close">✕</button>
+        <button type="button" class="sheet-close" aria-label="Close">${icon('bi-x-lg')}</button>
       </div>
       <div class="offer-big ${srcClass(s)}">
         <span class="badge">${esc(src.label)}</span>
@@ -358,7 +371,7 @@
         <div class="coin-total"><small>You get</small><b><i class="ci">${ICONS.coin}</i>${m.coins}</b></div>
       </div>
       <p class="coin-note">≈ ${fmt(m.dollars)} goes to your ${E.activeGoal().emoji} ${esc(E.activeGoal().name)} goal</p>
-      <div class="why" id="sheet-why"><span>💡 Why this?</span> <em id="sheet-why-text">${esc(E.reasonFor(s))}</em></div>
+      <div class="why" id="sheet-why"><span>${icon('bi-lightbulb')} Why this?</span> <em id="sheet-why-text">${esc(E.reasonFor(s))}</em></div>
       <button type="button" class="btn-use ${used ? 'is-used' : ''}" id="btn-use" ${used ? 'disabled' : ''}>
         ${used ? '✓ Used today: coins are in your Pot' : `Use offer · collect ${m.coins} coins`}
       </button>
@@ -448,7 +461,7 @@
     return `
       <button type="button" class="shop-card ${srcClass(s)} ${used ? 'is-used' : ''}" data-shop="${s.id}">
         <div class="shop-art cat-${s.category}">
-          <span class="shop-emoji">${cat.emoji}</span>
+          <span class="shop-emoji">${categoryIcon(s.category)}</span>
           <span class="shop-src">${ICONS[SOURCE_ICON[s.source]]}</span>
           ${s.isNew ? '<span class="shop-new">NEW</span>' : ''}
         </div>
@@ -463,14 +476,14 @@
   function renderFeed() {
     const cats = E.categories();
     if (feedCat !== 'all' && !cats.includes(feedCat)) feedCat = 'all';
-    $('#category-chips').innerHTML = [['all', '✨', 'All']]
-      .concat(cats.map((c) => [c, TM.CATEGORIES[c].emoji, TM.CATEGORIES[c].label]))
-      .map(([id, em, lab]) => `<button type="button" class="chip ${id === feedCat ? 'is-active' : ''}" data-cat="${id}">${em} ${esc(lab)}</button>`)
+    $('#category-chips').innerHTML = [['all', 'All']]
+      .concat(cats.map((c) => [c, TM.CATEGORIES[c].label]))
+      .map(([id, lab]) => `<button type="button" class="chip ${id === feedCat ? 'is-active' : ''}" data-cat="${id}">${categoryIcon(id)} ${esc(lab)}</button>`)
       .join('');
     const rows = [
-      ['📍 Near you', 'Closest to you now', E.nearYou(feedCat)],
-      ['🏆 Top Heroes', 'Biggest rewards', E.topHeroes(feedCat)],
-      ['🌱 New Heroes', 'Just joined', E.newHeroes(feedCat)],
+      [`${icon('bi-geo-alt')} Near you`, 'Closest to you now', E.nearYou(feedCat)],
+      [`${icon('bi-trophy')} Top Heroes`, 'Biggest rewards', E.topHeroes(feedCat)],
+      [`${icon('bi-stars')} New Heroes`, 'Just joined', E.newHeroes(feedCat)],
     ];
     $('#feed').innerHTML = rows.map(([title, sub, list]) => `
       <section class="row">
@@ -583,7 +596,7 @@
       <form class="card goal-form" id="goal-form" novalidate>
         <b>New goal</b>
         <label class="field"><span>What are you saving for?</span>
-          <input name="name" maxlength="30" placeholder="e.g. New laptop" required autocomplete="off"></label>
+        <input class="form-control" name="name" maxlength="30" placeholder="e.g. New laptop" required autocomplete="off"></label>
         <div class="field"><span>Pick an icon</span>
           <div class="emoji-row" role="radiogroup" aria-label="Goal icon">
             ${Object.keys(E.GOAL_EMOJIS).map((e) => `<button type="button" class="emoji-opt ${e === potUI.emoji ? 'is-active' : ''}" data-emoji="${e}" role="radio" aria-checked="${e === potUI.emoji}" title="${GOAL_EMOJI_LABELS[e]}">${e}</button>`).join('')}
@@ -591,14 +604,14 @@
         </div>
         <div class="field-row">
           <label class="field"><span>Price ($)</span>
-            <input name="target" type="number" inputmode="decimal" min="1" max="${E.MAX_GOAL_PRICE}" step="1" placeholder="1800" required></label>
+            <input class="form-control" name="target" type="number" inputmode="decimal" min="1" max="${E.MAX_GOAL_PRICE}" step="1" placeholder="1800" required></label>
           <label class="field"><span>By when? <small>(optional)</small></span>
-            <input name="deadline" type="date" min="${TM.util.addDays(TM.TODAY, 1)}"></label>
+            <input class="form-control" name="deadline" type="date" min="${TM.util.addDays(TM.TODAY, 1)}"></label>
         </div>
         ${potUI.error ? `<p class="form-error" role="alert">${esc(potUI.error)}</p>` : ''}
         <div class="form-btns">
-          <button type="submit" class="btn-yes">Create goal</button>
-          <button type="button" class="btn-no" data-action="cancel-add">Cancel</button>
+          <button type="submit" class="btn wp-btn-primary btn-yes">Create goal</button>
+          <button type="button" class="btn wp-btn-secondary btn-no" data-action="cancel-add">Cancel</button>
         </div>
       </form>`;
   }
@@ -613,10 +626,10 @@
     return `
       <form class="price-form" id="price-form" novalidate>
         <label class="field"><span>New price for ${esc(g.name)} ($)</span>
-          <input name="target" type="number" inputmode="decimal" min="1" max="${E.MAX_GOAL_PRICE}" step="1" value="${Math.round(g.target)}" required></label>
+          <input class="form-control" name="target" type="number" inputmode="decimal" min="1" max="${E.MAX_GOAL_PRICE}" step="1" value="${Math.round(g.target)}" required></label>
         ${potUI.error ? `<p class="form-error" role="alert">${esc(potUI.error)}</p>` : ''}
         <div class="form-btns">
-          <button type="submit" class="btn-yes">Save price</button>
+          <button type="submit" class="btn wp-btn-primary btn-yes">Save price</button>
           <button type="button" class="btn-no" data-action="cancel-price">Cancel</button>
         </div>
       </form>`;
@@ -662,15 +675,15 @@
       <h3 class="pot-h">Where it came from <span>last 60 days</span></h3>
       <div class="stack">${recent.map((b) => `<span class="stack-seg t-${b.type}" style="width:${((b.amount / recentSum) * 100).toFixed(2)}%" title="${esc(b.label)}"></span>`).join('')}</div>` : ''}
       <div class="stack-legend">
-        ${recent.map((b) => `<span><i class="dot t-${b.type}"></i>${b.icon} ${esc(b.label)}<b>${fmt(b.amount)}</b></span>`).join('')}
-        ${earlier ? `<span class="muted"><i class="dot t-earlier"></i>${earlier.icon} ${esc(earlier.label)}<b>${fmt(earlier.amount)}</b></span>` : ''}
+        ${recent.map((b) => `<span><i class="dot t-${b.type}"></i>${potIcon(b.type)} ${esc(b.label)}<b>${fmt(b.amount)}</b></span>`).join('')}
+        ${earlier ? `<span class="muted"><i class="dot t-earlier"></i>${potIcon('earlier')} ${esc(earlier.label)}<b>${fmt(earlier.amount)}</b></span>` : ''}
       </div>
 
       <h3 class="pot-h">History</h3>
       ${hist.length ? `<ul class="history">
         ${hist.map((h) => `
           <li class="${h.fresh ? 'is-fresh' : ''}">
-            <span class="h-ico t-${h.type}">${E.POT_TYPES[h.type].icon}</span>
+            <span class="h-ico t-${h.type}">${potIcon(h.type)}</span>
             <span class="h-main"><b>${esc(h.label)}</b><small>${dateLabel(h.date)}${h.time ? ' · ' + h.time : ''}${h.coins ? ' · ' + h.coins + ' coins' : ''}</small></span>
             <span class="h-amt">+${fmt(h.amount)}</span>
           </li>`).join('')}

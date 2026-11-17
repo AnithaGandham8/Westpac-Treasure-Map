@@ -17,21 +17,22 @@
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const money = (n) => '$' + Number(n).toFixed(2);
   const money0 = (n) => '$' + Math.round(n);
+  const biIcon = (name) => `<i class="bi ${name}" aria-hidden="true"></i>`;
 
   const RESULT = {
-    win:     { label: 'Hit',      icon: '✅' },
-    levelup: { label: 'Level up', icon: '⬆️' },
-    fail:    { label: 'Missed',   icon: '❌' },
-    eased:   { label: 'Eased',    icon: '🫶' },
-    shifted: { label: 'Shifted',  icon: '↔️' },
-    flagged: { label: 'Flagged',  icon: '🚩' },
+    win:     { label: 'Hit',      icon: 'bi-check-circle' },
+    levelup: { label: 'Level up', icon: 'bi-arrow-up-circle' },
+    fail:    { label: 'Missed',   icon: 'bi-x-circle' },
+    eased:   { label: 'Eased',    icon: 'bi-hand-thumbs-up' },
+    shifted: { label: 'Shifted',  icon: 'bi-arrow-left-right' },
+    flagged: { label: 'Flagged',  icon: 'bi-flag' },
   };
   const WEEKS = [
-    ['strong', '💪 Strong week'],
-    ['ok', '👍 Just hit it'],
-    ['fail', '😬 Missed'],
-    ['shifted', '↔️ Shifted spend'],
-    ['cheat', '🚩 Tiny-purchase cheat'],
+    ['strong', 'bi-lightning-charge', 'Strong week'],
+    ['ok', 'bi-check-lg', 'Just hit it'],
+    ['fail', 'bi-x-lg', 'Missed'],
+    ['shifted', 'bi-arrow-left-right', 'Shifted spend'],
+    ['cheat', 'bi-flag', 'Tiny-purchase cheat'],
   ];
 
   let shownTarget = null;
@@ -64,7 +65,7 @@
 
     const rows = m.history.slice(-5).reverse().map((h) => `
       <div class="week-row">
-        <span class="res res-${h.result}">${RESULT[h.result].icon} ${RESULT[h.result].label}</span>
+        <span class="res res-${h.result}">${biIcon(RESULT[h.result].icon)} ${RESULT[h.result].label}</span>
         <span class="muted">Week ${h.week}: ${money(h.actual)} vs ${money0(h.target)}</span>
       </div>`).join('') || '<p class="muted small">No weeks played yet. Use the demo buttons below to fast-forward one.</p>';
 
@@ -79,12 +80,12 @@
       </div>
 
       ${last ? `<div class="banner res-${last.result}" id="m-banner" role="status">
-        <b>${RESULT[last.result].icon} ${RESULT[last.result].label}.</b> ${esc(last.note)}${last.extra ? '<br>' + esc(last.extra) : ''}
+        <b>${biIcon(RESULT[last.result].icon)} ${RESULT[last.result].label}.</b> ${esc(last.note)}${last.extra ? '<br>' + esc(last.extra) : ''}
       </div>
       <div id="m-insight"></div>` : ''}
 
       ${p ? `<div class="card prompt" id="m-prompt">
-        <div class="ai-tag">✨ Ask first</div>
+        <div class="ai-tag">${biIcon('bi-stars')} Ask first</div>
         <p class="prompt-q">You hit your ${esc(name)} target. Send <b>${money(p.amount)}</b> to your ${esc(goalName())} goal?</p>
         <div class="prompt-btns">
           <button type="button" class="btn-yes" id="m-yes">Yes, send ${money(p.amount)}</button>
@@ -99,7 +100,7 @@
       </div>` : ''}
 
       <div class="card mission-card">
-        <div class="ai-tag">✨ Made from your spending</div>
+        <div class="ai-tag">${biIcon('bi-stars')} Made from your spending</div>
         <h3 class="m-target">Spend less than <span class="m-target-num ${changed ? 'flash' : ''}" id="m-target">${money0(m.target)}</span> on ${esc(name)} this week</h3>
         <p class="muted small">Your usual is ${money(m.anchor)} a week (median of your last 4 weeks), your top non-essential spend. Target now: ${Math.round((m.target / m.anchor) * 100)}% of that.</p>
         <div class="bar" role="progressbar" aria-valuenow="${spent}" aria-valuemin="0" aria-valuemax="${m.target}">
@@ -112,7 +113,7 @@
       <div class="card">
         <div class="level-head">
           <b>Level ${m.level}</b>
-          <span class="muted small">${atFloor || m.level >= maxL ? 'Healthy floor reached 🛟' : `Beat the target by 20% to reach Level ${m.level + 1}`}</span>
+          <span class="muted small">${atFloor || m.level >= maxL ? `${biIcon('bi-shield-check')} Healthy floor reached` : `Beat the target by 20% to reach Level ${m.level + 1}`}</span>
         </div>
         <div class="pips">${pips}</div>
         <p class="muted small">Two misses in a row and the target eases by about 10%${m.fails === 1 ? ' <b class="warn">(1 miss so far)</b>' : ''}. Targets never go below ${money0(floor)}, so you are never pushed into unsafe cuts.</p>
@@ -134,7 +135,7 @@
       <div class="card"><b>Recent weeks</b>${rows}</div>
 
       <div class="card">
-        <b>🛡️ Fair play checks</b>
+        <b>${biIcon('bi-shield-check')} Fair play checks</b>
         <ul class="fair">
           <li><b>Healthy floor:</b> the target never goes below ${money0(floor)} (60% of your usual).</li>
           <li><b>Shifted spend:</b> if the saving just moves to another category, it earns nothing.</li>
@@ -144,8 +145,8 @@
       </div>
 
       <div class="card demo-weeks">
-        <div class="ai-tag demo">Demo · fast-forward a week</div>
-        <div class="week-btns">${WEEKS.map(([k, l]) => `<button type="button" class="chip" data-week="${k}">${l}</button>`).join('')}</div>
+        <div class="ai-tag demo">${biIcon('bi-stars')} Demo · fast-forward a week</div>
+        <div class="week-btns">${WEEKS.map(([k, icon, label]) => `<button type="button" class="chip" data-week="${k}">${biIcon(icon)} ${label}</button>`).join('')}</div>
       </div>`;
 
     shownTarget = m.target;

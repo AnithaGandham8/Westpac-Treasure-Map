@@ -6,9 +6,13 @@ Rewards Westpac already pays for, finally in sight: **Treasure Map**, **Skip & S
 
 ## Files
 - `index.html`: phone frame, tabs (Map, Discover, Pot, Missions), demo controls on the right
-- `styles.css`: layout for all screens (base Night palette)
-- `theme.css`: Street Art theme, light (concrete + primer-white base, yellow / pink / cyan spray accents, Anton + Inter). Remove `class="ts"` from `<body>` to go back to plain Night
-- Fonts (Anton + Inter) are embedded inside `theme.css`, so no font files are needed and it works offline. Their licenses are at the end of `theme.css`
+- `styles.css`: structural layout for all screens (legacy base palette)
+- `theme.css`: preserved Street Art theme and its bundled font assets for reference/rollback
+- `westpac.css`: active Westpac visual layer and design tokens. To restore Street Art, remove the `westpac.css` link, change `<body class="wp-theme">` to `<body class="ts">`, and remove the Bootstrap links if you also want to restore the original dependency setup
+- `vendor/`: pinned local Bootstrap and Bootstrap Icons assets; local files keep the demo usable offline
+- Fonts (Anton + Inter) for the preserved Street Art theme are embedded inside `theme.css`; their licenses are at the end of that file. The active Westpac layer uses the system font stack with Inter first when available.
+- Bootstrap **5.3.8** is included locally under `vendor/bootstrap-5.3.8/` (MIT License).
+- Bootstrap Icons **1.13.2** are included locally under `vendor/bootstrap-icons-1.13.2/` (MIT License). See `vendor/README.md` for package sources and license details.
 - `data.js`: mock data, single source of truth (`window.TM`)
   - 25 Gold Coast shops, card tiers, Ana's 60 days of transactions, bills, main goal (Holiday trip)
   - `GOAL_IDEAS`: the example goals shown under the goal search (Travel, Food & coffee, Everyday shopping, Health & activities)
@@ -26,6 +30,8 @@ Rewards Westpac already pays for, finally in sight: **Treasure Map**, **Skip & S
 
 Load order matters: `data.js` → `engine.js` → `ai.js` → `app.js` → `missions.js`.
 
+CSS order matters too: Bootstrap → Bootstrap Icons → `styles.css` → `theme.css` → `westpac.css`. The last file is the active brand layer; keep legacy layout and behavior selectors in place when adjusting presentation.
+
 ## Me vs Me rules
 - **Target:** top non-essential category (delivery, coffee, rideshare, meals); median of the last 4 weeks × 0.9
 - **Level up:** beat the target by more than 20% → target 10% harder (max level 5)
@@ -39,3 +45,5 @@ Load order matters: `data.js` → `engine.js` → `ai.js` → `app.js` → `miss
 Then open http://localhost:8080 (opening `index.html` directly also works).
 
 Add `?scenario=rentDueTomorrow` (or `skippedCoffee`, `veryTight`) to the URL to start in a scenario.
+
+The Python server above only serves static files; it does not run the Cloudflare Pages Functions in `functions/api/`. AI-backed actions therefore use their local fallback in this setup. Add `?ai=off` to force local mode and avoid requests to those unavailable endpoints. Cloudflare Pages runs the configured AI endpoints.

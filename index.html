@@ -4,16 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Treasure Map</title>
+  <link rel="stylesheet" href="vendor/bootstrap-5.3.8/css/bootstrap.min.css">
+  <link rel="stylesheet" href="vendor/bootstrap-icons-1.13.2/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="westpac.css">
 </head>
-<body class="ts">
+<body class="wp-theme">
   <div class="stage">
     <!-- ================= PHONE ================= -->
     <div class="phone" id="app">
       <header class="topbar">
         <div class="brand">
-          <span class="brand-mark" aria-hidden="true">🗺️</span>
+          <span class="brand-mark" aria-hidden="true"><i class="bi bi-map"></i></span>
           <div>
             <div class="brand-title">Treasure <span>Map</span></div>
             <div class="brand-sub" id="hello">Hi Ana 👋</div>
@@ -37,8 +40,8 @@
             <div class="map-markers" id="map-markers"></div>
             <div class="map-chips" id="map-chips"></div>
             <div class="map-zoom">
-              <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
-              <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+              <button type="button" id="zoom-in" aria-label="Zoom in"><i class="bi bi-zoom-in" aria-hidden="true"></i></button>
+              <button type="button" id="zoom-out" aria-label="Zoom out"><i class="bi bi-zoom-out" aria-hidden="true"></i></button>
             </div>
             <div class="map-legend">
               <span><i data-icon="chest"></i>Extras</span>
@@ -53,8 +56,8 @@
           <div class="screen-pad">
             <!-- Phase 3 hooks the goal search into this input -->
             <label class="goal-search">
-              <span aria-hidden="true">✨</span>
-              <input id="goal-search" type="search" placeholder="Type a goal… e.g. beach holiday" autocomplete="off">
+              <span aria-hidden="true"><i class="bi bi-stars"></i></span>
+              <input class="form-control" id="goal-search" type="search" aria-label="Search for a savings goal" placeholder="Type a goal… e.g. beach holiday" autocomplete="off">
             </label>
             <div id="goal-result" aria-live="polite"></div>
             <div id="goal-ideas"></div>
@@ -75,10 +78,10 @@
       </main>
 
       <nav class="tabbar" aria-label="Main">
-        <button type="button" class="tab is-active" data-tab="map"><span>🗺️</span>Map</button>
-        <button type="button" class="tab" data-tab="discover"><span>🧭</span>Discover</button>
-        <button type="button" class="tab" data-tab="pot"><span>🫙</span>Pot<i class="tab-dot" id="pot-dot"></i></button>
-        <button type="button" class="tab" data-tab="missions"><span>🎯</span>Missions</button>
+          <button type="button" class="tab is-active" data-tab="map"><i class="bi bi-map" aria-hidden="true"></i>Map</button>
+        <button type="button" class="tab" data-tab="discover"><i class="bi bi-compass" aria-hidden="true"></i>Discover</button>
+        <button type="button" class="tab" data-tab="pot"><i class="bi bi-wallet2" aria-hidden="true"></i>Pot<i class="tab-dot" id="pot-dot"></i></button>
+        <button type="button" class="tab" data-tab="missions"><i class="bi bi-bullseye" aria-hidden="true"></i>Missions</button>
       </nav>
 
       <div class="sheet-backdrop" id="sheet-backdrop"></div>
@@ -92,10 +95,11 @@
       <div class="demo-title">Demo controls</div>
       <div id="scenario-switcher"></div>
       <p class="demo-note" id="scenario-note"></p>
-      <button type="button" class="demo-reset" id="reset-demo">↺ Reset demo</button>
+      <button type="button" class="demo-reset" id="reset-demo"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reset demo</button>
     </aside>
   </div>
 
+  <script src="vendor/bootstrap-5.3.8/js/bootstrap.bundle.min.js"></script>
   <script src="data.js"></script>
   <script src="engine.js"></script>
   <script src="ai.js"></script>
