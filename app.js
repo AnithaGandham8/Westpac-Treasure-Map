@@ -358,13 +358,20 @@
         <div class="coin-total"><small>You get</small><b><i class="ci">${ICONS.coin}</i>${m.coins}</b></div>
       </div>
       <p class="coin-note">≈ ${fmt(m.dollars)} goes to your ${TM.GOAL.emoji} ${esc(TM.GOAL.name)} Pot</p>
-      <div class="why"><span>💡 Why this?</span> ${esc(E.reasonFor(s))}</div>
+      <div class="why" id="sheet-why"><span>💡 Why this?</span> <em id="sheet-why-text">${esc(E.reasonFor(s))}</em></div>
       <button type="button" class="btn-use ${used ? 'is-used' : ''}" id="btn-use" ${used ? 'disabled' : ''}>
         ${used ? '✓ Used today: coins are in your Pot' : `Use offer · collect ${m.coins} coins`}
       </button>
       <p class="demo-hint">${used ? 'Come back tomorrow for more treasure.' : 'Demo: simulates paying here with your card.'}</p>`;
     $('.sheet-close', $('#sheet')).addEventListener('click', closeSheet);
     if (!used) $('#btn-use').addEventListener('click', (e) => useOffer(s.id, e.currentTarget));
+    // AI line replaces the rule-based one when it arrives; the rule-based text stays if the call fails
+    window.AI.why(s).then((r) => {
+      const t = $('#sheet-why-text');
+      if (sheetShop !== s.id || !t) return;
+      t.textContent = r.text;
+      if (r.source === 'ai' && !$('#sheet-why .ai-tag')) $('#sheet-why').insertAdjacentHTML('afterbegin', '<span class="ai-tag">AI</span> ');
+    });
   }
 
   function useOffer(id, fromEl) {
@@ -484,6 +491,47 @@
     });
   }
 
+  /* ======================= 7b. Goal search (AI) ======================= */
+  let goalSeq = 0;
+  function clearGoal() {
+    goalSeq += 1;
+    $('#goal-result').innerHTML = '';
+    highlightShops([]);
+  }
+  async function runGoalSearch(text) {
+    if (!text) return clearGoal();
+    const seq = ++goalSeq;
+    $('#goal-result').innerHTML = '<div class="card goal-card"><div class="ai-tag">AI · goal search</div><p class="muted small">Reading your goal…</p></div>';
+    const res = await window.AI.goalSearch(text);
+    if (seq !== goalSeq) return; // a newer search replaced this one
+    highlightShops(res.ranked.map((r) => r.id));
+    const tag = res.source === 'ai' ? 'AI · goal search' : 'Smart match · offline fallback';
+    $('#goal-result').innerHTML = `
+      <div class="card goal-card">
+        <div class="ai-tag">${tag}</div>
+        <div class="intent-row">
+          ${res.intents.map((i) => `<span class="intent">${esc(i)}</span>`).join('')}
+          ${res.month ? `<span class="intent when">📅 ${esc(res.month)}</span>` : ''}
+        </div>
+        ${res.ranked.length ? `<ul class="goal-list">${res.ranked.map((r) => {
+          const s = E.shopById(r.id);
+          return `<li><button type="button" data-shop="${s.id}"><span class="gl-main"><b>${esc(s.name)}</b><small>${esc(r.why)}</small></span><span class="gl-match">${r.score}%</span></button></li>`;
+        }).join('')}</ul>
+        <button type="button" class="link-btn" id="goal-on-map">Show on map →</button>` : '<p class="muted small">No offers match this goal with your current card.</p>'}
+      </div>`;
+    const onMap = $('#goal-on-map');
+    if (onMap) onMap.addEventListener('click', () => { showTab('map'); goArea('all'); });
+  }
+  function bindGoalSearch() {
+    const input = $('#goal-search');
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') runGoalSearch(input.value.trim()); });
+    input.addEventListener('input', () => { if (!input.value.trim()) clearGoal(); });
+    $('#goal-result').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-shop]');
+      if (b) openOffer(b.dataset.shop);
+    });
+  }
+
   /* ======================= 8. Pot ======================= */
   let lastPot = null;
   function renderPot(clearFresh) {
@@ -586,6 +634,7 @@
     bindPan();
     bindPowerup();
     bindFeed();
+    bindGoalSearch();
 
     $$('.tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
     $('#coin-counter').addEventListener('click', () => showTab('pot'));

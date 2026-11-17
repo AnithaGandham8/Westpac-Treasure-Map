@@ -79,7 +79,8 @@
 
       ${last ? `<div class="banner res-${last.result}" id="m-banner" role="status">
         <b>${RESULT[last.result].icon} ${RESULT[last.result].label}.</b> ${esc(last.note)}${last.extra ? '<br>' + esc(last.extra) : ''}
-      </div>` : ''}
+      </div>
+      <div id="m-insight"></div>` : ''}
 
       ${p ? `<div class="card prompt" id="m-prompt">
         <div class="ai-tag">✨ Ask first</div>
@@ -147,6 +148,7 @@
       </div>`;
 
     shownTarget = m.target;
+    if (last) loadInsight(m, rw);
 
     $('#m-auto').onclick = () => E.setAutoSend(!m.autoSend);
     if (p) {
@@ -160,6 +162,27 @@
       $('#m-no').onclick = () => E.declineReward();
     }
     view.querySelectorAll('[data-week]').forEach((b) => b.addEventListener('click', () => playWeek(b.dataset.week)));
+  }
+
+  // AI coaching note. Every number comes from engine.js; the model only writes the words.
+  // If the call fails (429, offline), the card simply does not appear and the banner above still shows the result.
+  async function loadInsight(m, rw) {
+    const last = m.last, week = m.week;
+    const payload = {
+      baseline: { category: m.category, usualWeekly: m.anchor, weeks: E.baseline(m.category).weeks },
+      thisWeek: { result: last.result, spent: m.history[m.history.length - 1].actual, target: last.before.target, level: last.after.level, nextTarget: last.after.target },
+      cashflow: { mode: rw.mode, buffer: rw.buffer, reward: rw.amount },
+    };
+    const out = await window.AI.insight(payload);
+    const box = $('#m-insight');
+    if (!out || !box || E.mission().week !== week) return; // user moved on
+    box.innerHTML = `
+      <div class="card insight">
+        <div class="ai-tag">AI · weekly insight</div>
+        <h3 class="insight-h">${esc(out.headline)}</h3>
+        <p class="small">${esc(out.detail)}</p>
+        <p class="muted small">${esc(out.nextTarget)}</p>
+      </div>`;
   }
 
   function playWeek(kind) {
