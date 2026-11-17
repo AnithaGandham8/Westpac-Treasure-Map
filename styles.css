@@ -167,3 +167,48 @@ body {
   .dynamic-island { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------- Phase 3: Skip & Save + Pot ---------- */
+.nav-item.pulse { animation: navpulse .9s ease; }
+@keyframes navpulse { 0%,100% { transform: scale(1); } 40% { transform: scale(1.25); color: var(--wp-red); } }
+
+.prompt-card {
+  background: #fff; border: 1px solid var(--wp-ai-border); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float); padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  max-height: 460px; overflow-y: auto;
+  transform: translateY(130%); opacity: 0; transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s;
+}
+.prompt-card.in { transform: translateY(0); opacity: 1; }
+.prompt-msg { color: var(--wp-text-primary); }
+.prompt-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+.prompt-actions button:disabled { opacity: .6; cursor: default; }
+.link-btn {
+  background: none; border: none; padding: 4px 0; text-align: left; cursor: pointer;
+  font: 500 13px/18px inherit; font-family: inherit; color: var(--wp-ai-accent); text-decoration: underline;
+}
+.confirm { color: var(--wp-success); text-align: center; padding: 8px 0; }
+.why-panel { background: var(--wp-ai-bg); border: 1px solid var(--wp-ai-border); border-radius: var(--radius-badge); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.habit-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.habit-table th { text-align: left; font-weight: 600; color: var(--wp-text-secondary); padding: 4px 4px 4px 0; }
+.habit-table td { padding: 4px 4px 4px 0; border-top: 1px solid var(--wp-ai-border); text-transform: capitalize; }
+.coin-fly {
+  position: absolute; z-index: 200; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--coin-gold); border: 2px solid var(--coin-gold-dark); color: var(--coin-gold-dark);
+  font: 700 14px/24px 'Inter', sans-serif; text-align: center; pointer-events: none;
+}
+
+.pot-card { position: relative; align-items: center; padding: 20px 16px; }
+.pot-ring { width: 180px; height: 180px; transform: rotate(-90deg); }
+.pot-ring .ring-bg { stroke: var(--wp-border-card); stroke-width: 9; fill: none; }
+.pot-ring .ring-fill { stroke: var(--wp-red); stroke-width: 9; fill: none; stroke-linecap: round; }
+.pot-center { position: absolute; top: 20px; left: 0; right: 0; height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.history-card { padding: 4px 16px; gap: 0; }
+.history-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F1F2F4; }
+.history-row:last-child { border-bottom: none; }
+.money-in { color: var(--wp-success); }
+.src { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: var(--radius-pill); margin-right: 6px; }
+.src-coins { background: #FFF6DD; color: var(--coin-gold-dark); }
+.src-skip { background: var(--wp-ai-bg); color: var(--wp-ai-accent); }
+.src-mission { background: #ECEBF5; color: var(--wp-indigo); }
+.decision-log { background: #0F1219; border-radius: 8px; padding: 10px; font-size: 12px; line-height: 1.5; color: #CBD5E1; }
+.decision-log b { color: #fff; }

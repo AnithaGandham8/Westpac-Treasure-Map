@@ -28,7 +28,15 @@
 
       <section class="screen-content tab-panel" id="tab-pot" aria-label="Pot">
         <h1 class="h2-text">Japan pot</h1>
-        <p class="caption-reg">Phase 2: balance, progress ring, where each dollar came from.</p>
+        <div class="card pot-card">
+          <svg class="pot-ring" viewBox="0 0 128 128" aria-hidden="true">
+            <circle cx="64" cy="64" r="56" class="ring-bg"/>
+            <circle cx="64" cy="64" r="56" class="ring-fill" id="pot-ring" stroke-dasharray="351.86" stroke-dashoffset="351.86"/>
+          </svg>
+          <div class="pot-center"><span class="display-money" id="pot-amount">$0</span><span class="caption-reg" id="pot-goal"></span><span class="caption-semi" id="pot-pct"></span></div>
+        </div>
+        <h2 class="h3-text">Where it came from</h2>
+        <div class="card history-card" id="pot-history"></div>
       </section>
 
       <section class="screen-content tab-panel" id="tab-missions" aria-label="Missions">
@@ -52,6 +60,9 @@
       <label><input type="radio" name="scenario" value="normal" checked> Normal day</label>
       <label><input type="radio" name="scenario" value="skipped"> Skipped coffee</label>
       <label><input type="radio" name="scenario" value="rent"> Rent due tomorrow</label>
+      <label><input type="radio" name="scenario" value="broke"> Very tight (silent)</label>
+      <button class="btn-secondary" id="btn-run">Run 6pm check</button>
+      <div class="decision-log" id="decision-log">Pick a scenario.</div>
       <button class="btn-secondary" id="btn-reset">Reset demo</button>
     </aside>
   </main>
