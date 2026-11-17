@@ -8,7 +8,7 @@ Rewards Westpac already pays for, finally in sight: **Treasure Map**, **Skip & S
 - `index.html`: phone frame, tabs (Map, Discover, Pot, Missions), demo controls on the right
 - `styles.css`: layout for all screens (base Night palette)
 - `theme.css`: Street Art theme, light (concrete + primer-white base, yellow / pink / cyan spray accents, Anton + Inter). Remove `class="ts"` from `<body>` to go back to plain Night
-- `fonts/`: Anton and Inter, bundled so the app works offline (SIL Open Font License)
+- Fonts (Anton + Inter) are embedded inside `theme.css`, so no font files are needed and it works offline. Their licenses are at the end of `theme.css`
 - `data.js`: mock data, single source of truth (`window.TM`)
   - 25 Gold Coast shops, card tiers, Ana's 60 days of transactions, bills, Japan goal
   - 4 scenarios: Normal day, Skipped coffee, Rent due tomorrow, Very tight (stays silent)
