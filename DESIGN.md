@@ -62,7 +62,7 @@ Use Inter when installed, followed by the system sans-serif stack. Keep body cop
 
 ## Layout
 
-The demo presents a mobile app inside a phone frame on wider screens, with scenario controls alongside it. At mobile widths, let the phone fill the viewport and place demo controls after the app content. The app itself has a stable header, card power-up selector, scrollable screen area, and fixed four-item bottom navigation. Keep the map as a full interactive geographic canvas; place floating chips and zoom controls where they do not obscure essential content.
+The demo presents a mobile app inside a phone frame on wider screens, with scenario controls alongside it. At mobile widths, let the phone fill the viewport and place demo controls after the app content. Start with a dedicated Rewards screen containing four large destination cards. Each destination has a clear return-to-home control in the header. Keep the card power-up selector on the destination screens, the balance available there, and the main content scrollable. A five-item bottom navigation stays visible across screens, with Rewards selected throughout the Rewards flow; Overview, Payments, Products, and Inbox are presentational placeholders with no action. Keep the map as a full interactive geographic canvas; place floating chips and zoom controls where they do not obscure essential content.
 
 Use a 4/8 px spacing rhythm. Cards and forms scroll within the app area above the bottom navigation. Preserve touch targets of at least 44 px for primary controls and icon-only buttons. Test realistic copy at narrow widths and with device safe areas.
 
@@ -76,6 +76,9 @@ Cards use a 16 px radius; buttons, inputs, and compact controls use about 12 px.
 
 ## Components
 
+- **Home destination cards:** white, softly elevated cards with an indigo Bootstrap Icon, a concise destination label, and a Westpac red right chevron. Use the four existing destinations and preserve their routing.
+- **Bottom navigation:** five equal destinations with a centered Bootstrap Icon and concise label. Highlight Rewards in Westpac red throughout the current product flow; keep the four unimplemented destinations visibly quiet and non-interactive.
+- **Return-to-home control:** a compact, accessible arrow button at the start of the header on destination screens; it returns to the Rewards card menu.
 - **Primary buttons:** Westpac red with white text; use for the single most important action in a task.
 - **Secondary buttons:** white with a neutral border and indigo text.
 - **Cards:** white surfaces with a quiet border and restrained elevation; keep information hierarchy inside rather than nesting decorative cards.
@@ -89,6 +92,7 @@ Cards use a 16 px radius; buttons, inputs, and compact controls use about 12 px.
 
 - Do preserve every current ID, `data-*` hook, public `window.App` method, script load order, and state transition when changing presentation.
 - Do keep Bootstrap 5.3.8 and Bootstrap Icons 1.13.2 local and version-pinned so the demo works offline.
+- Do keep the start screen limited to the product header, Rewards destination cards, and persistent bottom navigation; put balance and card controls inside the destination views.
 - Do retain the local SVG map, reward math, ledger, goal rules, mission safeguards, AI fallback, and reset behavior.
 - Do use real Bootstrap Icons for interface actions; retain emoji only as expressive goal content where the existing product uses it.
 - Don't use Bootstrap's default primary color as a substitute for Westpac red or indigo.

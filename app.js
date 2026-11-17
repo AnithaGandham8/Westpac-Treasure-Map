@@ -757,7 +757,13 @@
 
   /* ======================= 9. tabs, demo, init ======================= */
   function showTab(id) {
-    $$('.tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === id));
+    const allowed = ['home', 'map', 'discover', 'pot', 'missions'];
+    if (!allowed.includes(id)) return;
+    $('#app').dataset.currentView = id;
+    $('#home-back').hidden = id === 'home';
+    $('#coin-counter').hidden = id === 'home';
+    $('#powerup').hidden = id === 'home';
+    $('#hello').hidden = id === 'home';
     $$('.screen').forEach((s) => s.classList.toggle('is-active', s.dataset.screen === id));
     closeSheet();
     if (id === 'map') renderMap();
@@ -790,7 +796,7 @@
     bindGoalSearch();
     bindPot();
 
-    $$('.tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
+    $$('[data-tab]').forEach((item) => item.addEventListener('click', () => showTab(item.dataset.tab)));
     $('#coin-counter').addEventListener('click', () => showTab('pot'));
     $('#sheet-backdrop').addEventListener('click', closeSheet);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
@@ -815,11 +821,11 @@
   }
 
   // Hooks for other tabs (goal search, AI picks, Missions)
-  // Coins fly from an element to the Pot tab, then the Pot refreshes (used by Me vs Me)
+  // Coins fly to the visible balance in the header, then the Pot refreshes (used by Me vs Me)
   function sendToPot(fromEl) {
-    coinBurst(fromEl, $('[data-tab="pot"]'), () => {
-      const tab = $('[data-tab="pot"]');
-      tab.classList.remove('bump'); void tab.offsetWidth; tab.classList.add('bump');
+    coinBurst(fromEl, $('#coin-counter'), () => {
+      const counter = $('#coin-counter');
+      counter.classList.remove('bump'); void counter.offsetWidth; counter.classList.add('bump');
     });
     $('#pot-dot').classList.add('is-on');
     renderPot();

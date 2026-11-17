@@ -20,7 +20,7 @@ El mecanismo distintivo es hacer visibles y accionables recompensas que Westpac 
 
 ## Operating Context
 
-Prototipo web para móvil con cuatro secciones principales: Map, Discover, Pot y Missions. Se presenta en un marco de teléfono y tiene controles de demostración externos para alternar escenarios. El mapa está dibujado localmente para Gold Coast; la app puede abrirse como HTML estático o servirse localmente.
+Prototipo web para móvil con una navegación inferior de cinco destinos. Rewards es la sección implementada y abre una pantalla inicial de tarjetas para Map, Discover, Pot y Missions; cada sección ofrece un control para volver a esa pantalla. Overview, Payments, Products e Inbox se muestran como opciones sin acción. Se presenta en un marco de teléfono y tiene controles de demostración externos para alternar escenarios. El mapa está dibujado localmente para Gold Coast; la app puede abrirse como HTML estático o servirse localmente.
 
 ## Capabilities and Constraints
 

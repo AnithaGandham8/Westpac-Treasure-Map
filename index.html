@@ -13,27 +13,57 @@
 <body class="wp-theme">
   <div class="stage">
     <!-- ================= PHONE ================= -->
-    <div class="phone" id="app">
+    <div class="phone" id="app" data-current-view="home">
       <header class="topbar">
+        <button class="home-back" id="home-back" type="button" data-tab="home" aria-label="Back to home" hidden>
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
+        </button>
         <div class="brand">
           <span class="brand-mark" aria-hidden="true"><i class="bi bi-map"></i></span>
           <div>
             <div class="brand-title">Treasure <span>Map</span></div>
-            <div class="brand-sub" id="hello">Hi Ana 👋</div>
+            <div class="brand-sub" id="hello" hidden>Hi Ana 👋</div>
           </div>
         </div>
-        <button class="coin-counter" id="coin-counter" type="button" aria-label="Your coins">
+        <button class="coin-counter" id="coin-counter" type="button" aria-label="Your coins" hidden>
           <span class="coin-ico" data-icon="coin"></span>
           <span id="coin-count">0</span>
         </button>
       </header>
 
       <!-- Card power-up switcher -->
-      <div class="powerup" id="powerup" role="radiogroup" aria-label="Your card power-up"></div>
+      <div class="powerup" id="powerup" role="radiogroup" aria-label="Your card power-up" hidden></div>
 
       <main class="screens">
+        <!-- HOME: one card per existing destination -->
+        <section class="screen home-screen is-active" id="screen-home" data-screen="home">
+          <nav class="home-menu" aria-label="Main menu">
+            <button type="button" class="home-card" data-tab="map">
+              <span class="home-card-icon" aria-hidden="true"><i class="bi bi-map"></i></span>
+              <span class="home-card-title">Map</span>
+              <i class="bi bi-chevron-right home-card-arrow" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="home-card" data-tab="discover">
+              <span class="home-card-icon" aria-hidden="true"><i class="bi bi-compass"></i></span>
+              <span class="home-card-title">Discover</span>
+              <i class="bi bi-chevron-right home-card-arrow" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="home-card" data-tab="pot">
+              <span class="home-card-icon" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
+              <span class="home-card-title">Pot</span>
+              <i class="bi bi-chevron-right home-card-arrow" aria-hidden="true"></i>
+              <i class="home-card-dot" id="pot-dot" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="home-card" data-tab="missions">
+              <span class="home-card-icon" aria-hidden="true"><i class="bi bi-bullseye"></i></span>
+              <span class="home-card-title">Missions</span>
+              <i class="bi bi-chevron-right home-card-arrow" aria-hidden="true"></i>
+            </button>
+          </nav>
+        </section>
+
         <!-- MAP -->
-        <section class="screen is-active" id="screen-map" data-screen="map">
+        <section class="screen" id="screen-map" data-screen="map">
           <div class="map" id="map">
             <svg id="map-svg" preserveAspectRatio="none" aria-label="Map of the Gold Coast"></svg>
             <div class="map-labels" id="map-labels"></div>
@@ -77,11 +107,22 @@
         </section>
       </main>
 
-      <nav class="tabbar" aria-label="Main">
-          <button type="button" class="tab is-active" data-tab="map"><i class="bi bi-map" aria-hidden="true"></i>Map</button>
-        <button type="button" class="tab" data-tab="discover"><i class="bi bi-compass" aria-hidden="true"></i>Discover</button>
-        <button type="button" class="tab" data-tab="pot"><i class="bi bi-wallet2" aria-hidden="true"></i>Pot<i class="tab-dot" id="pot-dot"></i></button>
-        <button type="button" class="tab" data-tab="missions"><i class="bi bi-bullseye" aria-hidden="true"></i>Missions</button>
+      <nav class="bottom-nav" aria-label="Main navigation">
+        <button type="button" class="bottom-tab" aria-disabled="true" tabindex="-1">
+          <i class="bi bi-house" aria-hidden="true"></i><span>Overview</span>
+        </button>
+        <button type="button" class="bottom-tab" aria-disabled="true" tabindex="-1">
+          <i class="bi bi-cash-stack" aria-hidden="true"></i><span>Payments</span>
+        </button>
+        <button type="button" class="bottom-tab" aria-disabled="true" tabindex="-1">
+          <i class="bi bi-box-seam" aria-hidden="true"></i><span>Products</span>
+        </button>
+        <button type="button" class="bottom-tab" aria-disabled="true" tabindex="-1">
+          <i class="bi bi-envelope" aria-hidden="true"></i><span>Inbox</span>
+        </button>
+        <button type="button" class="bottom-tab is-active" data-tab="home" aria-current="page">
+          <i class="bi bi-coin" aria-hidden="true"></i><span>Rewards</span>
+        </button>
       </nav>
 
       <div class="sheet-backdrop" id="sheet-backdrop"></div>

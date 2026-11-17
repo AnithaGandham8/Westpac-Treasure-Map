@@ -5,7 +5,7 @@ Westpac Innovation and Coding Competition 2026.
 Rewards Westpac already pays for, finally in sight: **Treasure Map**, **Skip & Save**, **Me vs Me**.
 
 ## Files
-- `index.html`: phone frame, tabs (Map, Discover, Pot, Missions), demo controls on the right
+- `index.html`: phone frame, Rewards landing with cards for Map, Discover, Pot and Missions, return-to-home control on each destination, persistent five-item bottom navigation, demo controls on the right
 - `styles.css`: structural layout for all screens (legacy base palette)
 - `theme.css`: preserved Street Art theme and its bundled font assets for reference/rollback
 - `westpac.css`: active Westpac visual layer and design tokens. To restore Street Art, remove the `westpac.css` link, change `<body class="wp-theme">` to `<body class="ts">`, and remove the Bootstrap links if you also want to restore the original dependency setup
