@@ -78,24 +78,24 @@
     svg.innerHTML = `
       <defs>
         <linearGradient id="g-ocean" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#1a6496"/><stop offset=".35" stop-color="#114877"/><stop offset="1" stop-color="#0a2c55"/>
+          <stop offset="0" style="stop-color:var(--map-ocean-1)"/><stop offset=".35" style="stop-color:var(--map-ocean-2)"/><stop offset="1" style="stop-color:var(--map-ocean-3)"/>
         </linearGradient>
         <pattern id="p-grid" width="5" height="5" patternUnits="userSpaceOnUse">
-          <path d="M5 0H0V5" fill="none" stroke="#2c4380" stroke-width=".18"/>
+          <path d="M5 0H0V5" fill="none" style="stroke:var(--map-grid)" stroke-width=".18"/>
         </pattern>
       </defs>
-      <rect x="-300" y="-300" width="900" height="900" fill="#1c2d5a"/>
-      <rect x="-300" y="-300" width="900" height="900" fill="url(#p-grid)" opacity=".55"/>
-      ${HILLS.map(([la, ln, rx, ry]) => { const [x, y] = world(la, ln); return `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#21386c" opacity=".8"/>`; }).join('')}
-      <path d="${toPath(M1)}" fill="none" stroke="#3a5296" stroke-width="5" stroke-linecap="round" ${ns}/>
-      <path d="${toPath(M1)}" fill="none" stroke="#ffc93c" stroke-opacity=".35" stroke-width="1" stroke-dasharray="1.5 1.5" ${ns}/>
-      <path d="${toPath(HIGHWAY)}" fill="none" stroke="#33508f" stroke-width="3" stroke-linecap="round" ${ns}/>
-      <path d="${toPath(BROADWATER, true)}" fill="#155887"/>
-      <path d="${toPath(NERANG)}" fill="none" stroke="#155887" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" ${ns}/>
+      <rect x="-300" y="-300" width="900" height="900" style="fill:var(--map-land)"/>
+      <rect x="-300" y="-300" width="900" height="900" fill="url(#p-grid)" style="opacity:var(--map-grid-opacity)"/>
+      ${HILLS.map(([la, ln, rx, ry]) => { const [x, y] = world(la, ln); return `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" style="fill:var(--map-hill)" opacity=".8"/>`; }).join('')}
+      <path d="${toPath(M1)}" fill="none" style="stroke:var(--map-m1)" stroke-width="5" stroke-linecap="round" ${ns}/>
+      <path d="${toPath(M1)}" fill="none" style="stroke:var(--map-m1-dash);stroke-opacity:var(--map-m1-dash-opacity)" stroke-width="1" stroke-dasharray="1.5 1.5" ${ns}/>
+      <path d="${toPath(HIGHWAY)}" fill="none" style="stroke:var(--map-hwy)" stroke-width="3" stroke-linecap="round" ${ns}/>
+      <path d="${toPath(BROADWATER, true)}" style="fill:var(--map-water)"/>
+      <path d="${toPath(NERANG)}" fill="none" style="stroke:var(--map-water)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" ${ns}/>
       <path d="${toPath(OCEAN, true)}" fill="url(#g-ocean)"/>
-      <path d="${toPath(COAST)}" fill="none" stroke="#f4d58d" stroke-width="6" stroke-linejoin="round" ${ns}/>
-      <path d="${toPath(COAST)}" fill="none" stroke="#fff1c4" stroke-width="1.5" stroke-linejoin="round" ${ns}/>
-      ${WAVES.map(([la, ln]) => { const [x, y] = world(la, ln); return `<path d="M${x - 3} ${y}q1.5 -1.4 3 0t3 0" fill="none" stroke="#8fd3ff" stroke-opacity=".35" stroke-width="1.6" stroke-linecap="round" ${ns}/>`; }).join('')}`;
+      <path d="${toPath(COAST)}" fill="none" style="stroke:var(--map-beach)" stroke-width="6" stroke-linejoin="round" ${ns}/>
+      <path d="${toPath(COAST)}" fill="none" style="stroke:var(--map-beach-edge)" stroke-width="1.5" stroke-linejoin="round" ${ns}/>
+      ${WAVES.map(([la, ln]) => { const [x, y] = world(la, ln); return `<path d="M${x - 3} ${y}q1.5 -1.4 3 0t3 0" fill="none" style="stroke:var(--map-wave);stroke-opacity:var(--map-wave-opacity)" stroke-width="1.6" stroke-linecap="round" ${ns}/>`; }).join('')}`;
   }
 
   let placeEls = [];
@@ -439,7 +439,7 @@
     const used = E.isUsed(s.id);
     const cat = TM.CATEGORIES[s.category];
     return `
-      <button type="button" class="shop-card ${used ? 'is-used' : ''}" data-shop="${s.id}">
+      <button type="button" class="shop-card ${srcClass(s)} ${used ? 'is-used' : ''}" data-shop="${s.id}">
         <div class="shop-art cat-${s.category}">
           <span class="shop-emoji">${cat.emoji}</span>
           <span class="shop-src">${ICONS[SOURCE_ICON[s.source]]}</span>
