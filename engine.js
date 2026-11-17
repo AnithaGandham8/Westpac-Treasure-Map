@@ -97,10 +97,12 @@
   const categories = () => [...new Set(visible().map((s) => s.category))];
 
   /* ---------- "why this?" (rule-based now; the AI version replaces this in Phase 3) ---------- */
-  function reasonFor(shop) {
+  // goal is optional: the goal typed in Discover ({ name, emoji, tags }); default is the saved goal
+  function reasonFor(shop, goal) {
+    const g = goal || TM.GOAL;
     const d = formatDistance(distanceFromUser(shop));
-    if (shop.tags.some((t) => TM.GOAL.tags.includes(t))) {
-      return `Matches your goal: ${TM.GOAL.name} ${TM.GOAL.emoji}. ${d} from work.`;
+    if (shop.tags.some((t) => g.tags.includes(t))) {
+      return `Matches your goal: ${g.name} ${g.emoji}. ${d} from work.`;
     }
     if (['coffee', 'meals', 'groceries'].includes(shop.category)) {
       const weekly = TM.weeklyAverage(shop.category);
